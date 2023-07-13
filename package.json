@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.369.0",
+    "@cdktf/provider-aws": "^16.0.2"
+  }
+}
