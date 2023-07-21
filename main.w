@@ -220,29 +220,29 @@ class Util {
 //   score: str;
 // }
 
-let table = new DynamoDBTable(hashKey: "Name");
+// let table = new DynamoDBTable(hashKey: "Name");
 
-let api = new cloud.Api();
+// let api = new cloud.Api();
 
 // returns a response in the format
 // [
 //   { "Name": "Fruit", "Score": "1" },
 //   { "Name": "Vegetable", "Score": "0" },
 // ]
-api.get("/items", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
-  let items = table.scan();
-  let itemsFormatted = MutArray<Map<str>>[];
-  for item in items {
-    itemsFormatted.push({
-      "Name" => str.fromJson(item.get("Name").value),
-      "Score" => str.fromJson(item.get("Score").value),
-    });
-  }
-  return cloud.ApiResponse {
-    status: 200,
-    body: Json.stringify(itemsFormatted),
-  };
-});
+// api.get("/items", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
+//   let items = table.scan();
+//   let itemsFormatted = MutArray<Map<str>>[];
+//   for item in items {
+//     itemsFormatted.push({
+//       "Name" => str.fromJson(item.get("Name").value),
+//       "Score" => str.fromJson(item.get("Score").value),
+//     });
+//   }
+//   return cloud.ApiResponse {
+//     status: 200,
+//     body: Json.stringify(itemsFormatted),
+//   };
+// });
 
 // expects a request in the format
 // {
@@ -262,132 +262,132 @@ api.get("/items", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
 //
 // example:
 // curl -X POST -H "Content-Type: application/json" -d '{"options":[{"Name":"Fruit","Score":"0"},{"Name":"Vegetable","Score":"0"}],"userChoice":"Fruit"}' http://localhost:8080/vote
-api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
-  let body = Json.parse(req.body ?? "");
-  log(Json.stringify(body, 2));
-  let userChoice = str.fromJson(body.get("userChoice"));
-  // TODO: https://github.com/winglang/wing/issues/1796
-  let options = Util.jsonToArray(body.get("options"));
+// api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
+//   let body = Json.parse(req.body ?? "");
+//   log(Json.stringify(body, 2));
+//   let userChoice = str.fromJson(body.get("userChoice"));
+//   // TODO: https://github.com/winglang/wing/issues/1796
+//   let options = Util.jsonToArray(body.get("options"));
 
-  if options.length != 2 {
-    return cloud.ApiResponse {
-      status: 400,
-      body: Json.stringify({
-        "error": "Invalid number of options (expected 2)",
-      }),
-    };
-  }
+//   if options.length != 2 {
+//     return cloud.ApiResponse {
+//       status: 400,
+//       body: Json.stringify({
+//         "error": "Invalid number of options (expected 2)",
+//       }),
+//     };
+//   }
 
-  let winningItem = findItem2(options, { "Name" => userChoice });
+//   let winningItem = findItem2(options, { "Name" => userChoice });
 
-  if let winningItem = winningItem {
-    // update the winning item, and format it as a DynamoDB Item
-    let updatedItem = MutMap<Attribute>{};
-    updatedItem.set("Name", Attribute {
-      type: AttributeType.String,
-      value: userChoice,
-    });
-    updatedItem.set("Score", Attribute {
-      type: AttributeType.Number,
-      value: "${num.fromStr(winningItem.get("Score")) + 1}",
-    });
-    table.putItem(updatedItem.copy());
+//   if let winningItem = winningItem {
+//     // update the winning item, and format it as a DynamoDB Item
+//     let updatedItem = MutMap<Attribute>{};
+//     updatedItem.set("Name", Attribute {
+//       type: AttributeType.String,
+//       value: userChoice,
+//     });
+//     updatedItem.set("Score", Attribute {
+//       type: AttributeType.Number,
+//       value: "${num.fromStr(winningItem.get("Score")) + 1}",
+//     });
+//     table.putItem(updatedItem.copy());
 
-    // update the options array
-    let updatedOptions = MutArray<Map<str>>[];
-    for option in options {
-      if option.get("Name") == userChoice {
-        updatedOptions.push({
-          "Name" => userChoice,
-          "Score" => "${num.fromStr(option.get("Score")) + 1}",
-        });
-      } else {
-        updatedOptions.push(option);
-      }
-    }
+//     // update the options array
+//     let updatedOptions = MutArray<Map<str>>[];
+//     for option in options {
+//       if option.get("Name") == userChoice {
+//         updatedOptions.push({
+//           "Name" => userChoice,
+//           "Score" => "${num.fromStr(option.get("Score")) + 1}",
+//         });
+//       } else {
+//         updatedOptions.push(option);
+//       }
+//     }
 
-    return cloud.ApiResponse {
-      status: 200,
-      body: Json.stringify({
-        "updatedOptions": Util.mutArrayMapToJson(updatedOptions),
-      }),
-    };
-  } else {
-    return cloud.ApiResponse {
-      status: 400,
-      body: Json.stringify({
-        "error": "User choice does not match options",
-      }),
-    };
-  }
-});
+//     return cloud.ApiResponse {
+//       status: 200,
+//       body: Json.stringify({
+//         "updatedOptions": Util.mutArrayMapToJson(updatedOptions),
+//       }),
+//     };
+//   } else {
+//     return cloud.ApiResponse {
+//       status: 400,
+//       body: Json.stringify({
+//         "error": "User choice does not match options",
+//       }),
+//     };
+//   }
+// });
 
 // --- tests ---
 
-test "put and get an item in the table" {
-  table.putItem({
-    "Name" => Attribute {
-      type: AttributeType.String,
-      value: "Fruit",
-    },
-    "Score" => Attribute {
-      type: AttributeType.Number,
-      value: "1500",
-    },
-  });
+// test "put and get an item in the table" {
+//   table.putItem({
+//     "Name" => Attribute {
+//       type: AttributeType.String,
+//       value: "Fruit",
+//     },
+//     "Score" => Attribute {
+//       type: AttributeType.Number,
+//       value: "1500",
+//     },
+//   });
 
-  let item = table.getItem({
-    "Name" => Attribute {
-      type: AttributeType.String,
-      value: "Fruit",
-    },
-  });
+//   let item = table.getItem({
+//     "Name" => Attribute {
+//       type: AttributeType.String,
+//       value: "Fruit",
+//     },
+//   });
 
-  assert(item.get("Score").value == "1500");
-}
+//   assert(item.get("Score").value == "1500");
+// }
 
-test "scan items in the table" {
-  table.putItem({
-    "Name" => Attribute {
-      type: AttributeType.String,
-      value: "Fruit",
-    },
-    "Score" => Attribute {
-      type: AttributeType.Number,
-      value: "1500",
-    },
-  });
-  table.putItem({
-    "Name" => Attribute {
-      type: AttributeType.String,
-      value: "Vegetables",
-    },
-    "Score" => Attribute {
-      type: AttributeType.Number,
-      value: "1400",
-    },
-  });
+// test "scan items in the table" {
+//   table.putItem({
+//     "Name" => Attribute {
+//       type: AttributeType.String,
+//       value: "Fruit",
+//     },
+//     "Score" => Attribute {
+//       type: AttributeType.Number,
+//       value: "1500",
+//     },
+//   });
+//   table.putItem({
+//     "Name" => Attribute {
+//       type: AttributeType.String,
+//       value: "Vegetables",
+//     },
+//     "Score" => Attribute {
+//       type: AttributeType.Number,
+//       value: "1400",
+//     },
+//   });
 
-  let items = table.scan();
-  assert(items.length == 2);
-  assert(containsItem(items, {
-    "Name" => Attribute {
-      type: AttributeType.String,
-      value: "Fruit",
-    },
-    "Score" => Attribute {
-      type: AttributeType.Number,
-      value: "1500",
-    },
-  }));
-  assert(containsItem(items, {
-    "Name" => Attribute {
-      type: AttributeType.String,
-      value: "Vegetables",
-    },
-    "Score" => Attribute {
-      type: AttributeType.Number,
-      value: "1400",
-    },
-  }));
-}
+//   let items = table.scan();
+//   assert(items.length == 2);
+//   assert(containsItem(items, {
+//     "Name" => Attribute {
+//       type: AttributeType.String,
+//       value: "Fruit",
+//     },
+//     "Score" => Attribute {
+//       type: AttributeType.Number,
+//       value: "1500",
+//     },
+//   }));
+//   assert(containsItem(items, {
+//     "Name" => Attribute {
+//       type: AttributeType.String,
+//       value: "Vegetables",
+//     },
+//     "Score" => Attribute {
+//       type: AttributeType.Number,
+//       value: "1400",
+//     },
+//   }));
+// }
