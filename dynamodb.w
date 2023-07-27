@@ -34,7 +34,7 @@ class DynamoDBTable {
 
     this.hashKey = props.hashKey;
     this.table = new tfaws.dynamodbTable.DynamodbTable(
-      name: "Table-${this.node.addr.substring(this.node.addr.length - 8)}",
+      name: "${this.node.id}-${this.node.addr.substring(this.node.addr.length - 8)}",
       billingMode: "PAY_PER_REQUEST",
       hashKey: this.hashKey,
       attribute: [
