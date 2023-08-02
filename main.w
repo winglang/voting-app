@@ -130,6 +130,11 @@ new cloud.OnDeploy(inflight () => {
 
 let api = new cloud.Api() as "VotingAppApi";
 
+let website = new cloud.Website(
+  path: "./website/build",
+);
+website.addJson("config.json", { apiUrl: api.url });
+
 // returns a response in the format
 // [
 //   { "Name": "Fruit", "Score": "1" },
@@ -146,6 +151,12 @@ api.get("/items", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
     });
   }
   return cloud.ApiResponse {
+    // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
+    headers: {
+      "Access-Control-Allow-Headers" => "*",
+      "Access-Control-Allow-Origin" => "*",
+      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+    },
     status: 200,
     body: Json.stringify(itemsFormatted),
   };
@@ -178,6 +189,11 @@ api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
 
   if options.length != 2 {
     return cloud.ApiResponse {
+      headers: {
+      "Access-Control-Allow-Headers" => "*",
+      "Access-Control-Allow-Origin" => "*",
+      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+    },
       status: 400,
       body: Json.stringify({
         "error": "Invalid number of options (expected 2)",
@@ -214,6 +230,11 @@ api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
     }
 
     return cloud.ApiResponse {
+      headers: {
+      "Access-Control-Allow-Headers" => "*",
+      "Access-Control-Allow-Origin" => "*",
+      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+    },
       status: 200,
       body: Json.stringify({
         "updatedOptions": Util.mutArrayMapToJson(updatedOptions),
@@ -221,6 +242,11 @@ api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
     };
   } else {
     return cloud.ApiResponse {
+      headers: {
+      "Access-Control-Allow-Headers" => "*",
+      "Access-Control-Allow-Origin" => "*",
+      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+    },
       status: 400,
       body: Json.stringify({
         "error": "User choice does not match options",
