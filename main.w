@@ -5,17 +5,12 @@ bring cloud;
 
 // --- utils ---
 
-// TODO: https://github.com/winglang/wing/issues/2939
-let _equalAttributes = inflight (a: ddb.Attribute, b: ddb.Attribute): bool => {
-  return a.type == b.type && a.value == b.value;
-};
-
 // Check if an array of items contains an item with the given attributes
 let containsItem = inflight (items: Array<Map<ddb.Attribute>>, attributes: Map<ddb.Attribute>): bool => {
   for i in items {
     let var matches = true;
     for key in attributes.keys() {
-      if !_equalAttributes(i.get(key), attributes.get(key)) {
+      if i.get(key) != attributes.get(key) {
         matches = false;
         break;
       }
@@ -31,7 +26,7 @@ let findItem = inflight (items: Array<Map<ddb.Attribute>>, attributes: Map<ddb.A
   for i in items {
     let var matches = true;
     for key in attributes.keys() {
-      if !_equalAttributes(i.get(key), attributes.get(key)) {
+      if i.get(key) != attributes.get(key) {
         matches = false;
         break;
       }
