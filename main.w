@@ -5,17 +5,12 @@ bring cloud;
 
 // --- utils ---
 
-// TODO: https://github.com/winglang/wing/issues/2939
-let _equalAttributes = inflight (a: ddb.Attribute, b: ddb.Attribute): bool => {
-  return a.type == b.type && a.value == b.value;
-};
-
 // Check if an array of items contains an item with the given attributes
 let containsItem = inflight (items: Array<Map<ddb.Attribute>>, attributes: Map<ddb.Attribute>): bool => {
   for i in items {
     let var matches = true;
     for key in attributes.keys() {
-      if !_equalAttributes(i.get(key), attributes.get(key)) {
+      if i.get(key) != attributes.get(key) {
         matches = false;
         break;
       }
@@ -31,7 +26,7 @@ let findItem = inflight (items: Array<Map<ddb.Attribute>>, attributes: Map<ddb.A
   for i in items {
     let var matches = true;
     for key in attributes.keys() {
-      if !_equalAttributes(i.get(key), attributes.get(key)) {
+      if i.get(key) != attributes.get(key) {
         matches = false;
         break;
       }
@@ -135,6 +130,11 @@ new cloud.OnDeploy(inflight () => {
 
 let api = new cloud.Api() as "VotingAppApi";
 
+let website = new cloud.Website(
+  path: "./website/build",
+);
+website.addJson("config.json", { apiUrl: api.url });
+
 // returns a response in the format
 // [
 //   { "Name": "Fruit", "Score": "1" },
@@ -151,6 +151,12 @@ api.get("/items", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
     });
   }
   return cloud.ApiResponse {
+    // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
+    headers: {
+      "Access-Control-Allow-Headers" => "*",
+      "Access-Control-Allow-Origin" => "*",
+      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+    },
     status: 200,
     body: Json.stringify(itemsFormatted),
   };
@@ -183,6 +189,11 @@ api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
 
   if options.length != 2 {
     return cloud.ApiResponse {
+      headers: {
+      "Access-Control-Allow-Headers" => "*",
+      "Access-Control-Allow-Origin" => "*",
+      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+    },
       status: 400,
       body: Json.stringify({
         "error": "Invalid number of options (expected 2)",
@@ -219,6 +230,11 @@ api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
     }
 
     return cloud.ApiResponse {
+      headers: {
+      "Access-Control-Allow-Headers" => "*",
+      "Access-Control-Allow-Origin" => "*",
+      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+    },
       status: 200,
       body: Json.stringify({
         "updatedOptions": Util.mutArrayMapToJson(updatedOptions),
@@ -226,6 +242,11 @@ api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
     };
   } else {
     return cloud.ApiResponse {
+      headers: {
+      "Access-Control-Allow-Headers" => "*",
+      "Access-Control-Allow-Origin" => "*",
+      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+    },
       status: 400,
       body: Json.stringify({
         "error": "User choice does not match options",
