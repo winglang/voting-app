@@ -72,17 +72,15 @@ class Store {
   }
 
   inflight updateScores(winner: str, loser: str): Array<num> {
-    let items = this.table.scan();
+    let entries = this.list();
 
     let var winnerScore = 0;
     let var loserScore = 0;
-    for item in items {
-      let name = str.fromJson(item.get("Name").value);
-      let score = num.fromJson(item.get("Score").value);
-      if name == winner {
-        winnerScore = score;
-      } elif name == loser {
-        loserScore = score;
+    for entry in entries {
+      if entry.name == winner {
+        winnerScore = entry.score;
+      } elif entry.name == loser {
+        loserScore = entry.score;
       }
     }
 
@@ -95,10 +93,7 @@ class Store {
     let items = this.table.scan();
     let entries = MutArray<Entry>[];
     for item in items {
-      entries.push(Entry {
-        name: str.fromJson(item.get("Name").value),
-        score: num.fromJson(item.get("Score").value),
-      });
+      entries.push(_mapToEntry(item));
     }
     return entries.copy();
   }
