@@ -62,7 +62,7 @@ class Store {
 
     let firstIdx = math.floor(math.random() * items.length);
     let var secondIdx = math.floor(math.random() * items.length);
-    while secondIdx != firstIdx {
+    while secondIdx == firstIdx {
       secondIdx = math.floor(math.random() * items.length);
     }
 
@@ -164,6 +164,10 @@ website.addJson("config.json", { apiUrl: api.url });
 // Select two random items from the list of items for the user to choose between
 api.post("/requestChoices", inflight (_) => {
   let items = store.getRandomPair();
+  let itemNames = MutArray<str>[];
+  for item in items {
+    itemNames.push(item.name);
+  }
   return cloud.ApiResponse {
     // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
     headers: {
@@ -172,7 +176,7 @@ api.post("/requestChoices", inflight (_) => {
       "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
     },
     status: 200,
-    body: Json.stringify(items),
+    body: Json.stringify(itemNames),
   };
 });
 
