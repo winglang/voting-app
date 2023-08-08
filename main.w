@@ -86,6 +86,10 @@ class Store {
 
     let var winnerNewScore = winnerScore + 1;
     let var loserNewScore = loserScore - 1;
+
+    this.setEntry(Entry { name: winner, score: winnerNewScore });
+    this.setEntry(Entry { name: loser, score: loserNewScore });
+
     return [winnerNewScore, loserNewScore];
   }
 
