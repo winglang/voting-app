@@ -1,75 +1,112 @@
 bring "./dynamodb.w" as ddb;
 bring cloud;
+bring math;
 
 // TODO: add image for each item?
 
-// --- utils ---
+// --- types ---
 
-// Check if an array of items contains an item with the given attributes
-let containsItem = inflight (items: Array<Map<ddb.Attribute>>, attributes: Map<ddb.Attribute>): bool => {
-  for i in items {
-    let var matches = true;
-    for key in attributes.keys() {
-      if i.get(key) != attributes.get(key) {
-        matches = false;
-        break;
-      }
-    }
-    if matches {
-      return true;
-    }
-  }
-  return false;
+struct Entry {
+  name: str;
+  score: num;
+}
+
+let _entryToMap = inflight (entry: Entry) => {
+  return Map<ddb.Attribute> {
+    "Name" => ddb.Attribute {
+      type: ddb.AttributeType.String,
+      value: entry.name,
+    },
+    "Score" => ddb.Attribute {
+      type: ddb.AttributeType.Number,
+      value: "${entry.score}",
+    },
+  };
 };
 
-let findItem = inflight (items: Array<Map<ddb.Attribute>>, attributes: Map<ddb.Attribute>): Map<ddb.Attribute>? => {
-  for i in items {
-    let var matches = true;
-    for key in attributes.keys() {
-      if i.get(key) != attributes.get(key) {
-        matches = false;
-        break;
-      }
-    }
-    if matches {
-      return i;
-    }
-  }
-  return nil;
+let _mapToEntry = inflight (map: Map<ddb.Attribute>): Entry => {
+  return Entry {
+    name: str.fromJson(map.get("Name").value),
+    score: num.fromStr(str.fromJson(map.get("Score").value)),
+  };
 };
-let findItem2 = inflight (items: Array<Map<str>>, item: Map<str>): Map<str>? => {
-  for i in items {
-    let var matches = true;
-    for key in item.keys() {
-      if i.get(key) != item.get(key) {
-        matches = false;
-        break;
-      }
-    }
-    if matches {
-      return i;
-    }
-  }
-  return nil;
-};
+
+struct SelectWinnerRequest {
+  winner: str;
+  loser: str;
+}
+
+struct SelectWinnerResponse {
+  winner: num;
+  loser: num;
+}
 
 class Util {
-  extern "./util.js" static inflight jsonToArray(json: Json): Array<Map<str>>;
-  extern "./util.js" static inflight mutArrayMapToJson(items: MutArray<Map<str>>): Json;
+  extern "./util.js" static inflight jsonToSelectWinnerRequest(json: Json): SelectWinnerRequest;
 }
 
 // --- application ---
 
-// TODO https://github.com/winglang/wing/issues/3139
+class Store {
+  table: ddb.DynamoDBTable;
+  init() {
+    this.table = new ddb.DynamoDBTable(hashKey: "Name") as "Items";
+  }
 
-struct Entry {
-  name: str;
-  score: str;
+  inflight setEntry(entry: Entry) {
+    this.table.putItem(_entryToMap(entry));
+  }
+
+  inflight getRandomPair(): Array<Entry> {
+    let items = this.table.scan();
+
+    let firstIdx = math.floor(math.random() * items.length);
+    let var secondIdx = math.floor(math.random() * items.length);
+    while secondIdx != firstIdx {
+      secondIdx = math.floor(math.random() * items.length);
+    }
+
+    let first = _mapToEntry(items.at(firstIdx));
+    let second = _mapToEntry(items.at(secondIdx));
+    return [first, second];
+  }
+
+  inflight updateScores(winner: str, loser: str): Array<num> {
+    let items = this.table.scan();
+
+    let var winnerScore = 0;
+    let var loserScore = 0;
+    for item in items {
+      let name = str.fromJson(item.get("Name").value);
+      let score = num.fromJson(item.get("Score").value);
+      if name == winner {
+        winnerScore = score;
+      } elif name == loser {
+        loserScore = score;
+      }
+    }
+
+    let var winnerNewScore = winnerScore + 1;
+    let var loserNewScore = loserScore - 1;
+    return [winnerNewScore, loserNewScore];
+  }
+
+  inflight list(): Array<Entry> {
+    let items = this.table.scan();
+    let entries = MutArray<Entry>[];
+    for item in items {
+      entries.push(Entry {
+        name: str.fromJson(item.get("Name").value),
+        score: num.fromJson(item.get("Score").value),
+      });
+    }
+    return entries.copy();
+  }
 }
 
-let table = new ddb.DynamoDBTable(hashKey: "Name") as "VotingAppItems";
+let store = new Store() as "VotingAppStore";
 
-let items = [
+let foods = [
   "Nigiri sushi",
   "Pizza margherita",
   "Pulled pork",
@@ -114,16 +151,10 @@ let items = [
 ];
 
 new cloud.OnDeploy(inflight () => {
-  for item in items {
-    table.putItem({
-      "Name" => ddb.Attribute {
-        type: ddb.AttributeType.String,
-        value: item,
-      },
-      "Score" => ddb.Attribute {
-        type: ddb.AttributeType.Number,
-        value: "0",
-      },
+  for food in foods {
+    store.setEntry(Entry {
+      name: food,
+      score: 0,
     });
   }
 }) as "InitializeTable";
@@ -135,21 +166,9 @@ let website = new cloud.Website(
 );
 website.addJson("config.json", { apiUrl: api.url });
 
-// returns a response in the format
-// [
-//   { "Name": "Fruit", "Score": "1" },
-//   { "Name": "Vegetable", "Score": "0" },
-//   ...
-// ]
-api.get("/items", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
-  let items = table.scan();
-  let itemsFormatted = MutArray<Map<str>>[];
-  for item in items {
-    itemsFormatted.push({
-      "Name" => str.fromJson(item.get("Name").value),
-      "Score" => str.fromJson(item.get("Score").value),
-    });
-  }
+// Select two random items from the list of items for the user to choose between
+api.post("/requestChoices", inflight (_) => {
+  let items = store.getRandomPair();
   return cloud.ApiResponse {
     // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
     headers: {
@@ -158,101 +177,45 @@ api.get("/items", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
       "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
     },
     status: 200,
-    body: Json.stringify(itemsFormatted),
+    body: Json.stringify(items),
   };
 });
 
-// expects a request in the format
-// {
-//   "options": [
-//     { "Name": "Fruit", "Score": "0" },
-//     { "Name": "Vegetable", "Score": "0" },
-//    ],
-//   "userChoice": "Fruit",
-// }
-// and returns a response in the format
-// {
-//   "updatedOptions": {
-//     { "Name": "Fruit", "Score": "1" },
-//     { "Name": "Vegetable", "Score": "0" },
-//   },
-// }
-//
-// example:
-// curl -X POST -H "Content-Type: application/json" -d '{"options":[{"Name":"Fruit","Score":"0"},{"Name":"Vegetable","Score":"0"}],"userChoice":"Fruit"}' http://localhost:8080/vote
-api.post("/vote", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
-  let body = Json.parse(req.body ?? "");
-  log(Json.stringify(body, 2));
-  let userChoice = str.fromJson(body.get("userChoice"));
-  // TODO: https://github.com/winglang/wing/issues/1796
-  let options = Util.jsonToArray(body.get("options"));
-
-  if options.length != 2 {
-    return cloud.ApiResponse {
-      headers: {
+// Obtain a list of all items and their scores
+api.get("/items", inflight (_) => {
+  let items = store.list();
+  return cloud.ApiResponse {
+    // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
+    headers: {
       "Access-Control-Allow-Headers" => "*",
       "Access-Control-Allow-Origin" => "*",
       "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
     },
-      status: 400,
-      body: Json.stringify({
-        "error": "Invalid number of options (expected 2)",
-      }),
-    };
-  }
-
-  let winningItem = findItem2(options, { "Name" => userChoice });
-
-  if let winningItem = winningItem {
-    // update the winning item, and format it as a DynamoDB Item
-    let updatedItem = MutMap<ddb.Attribute>{};
-    updatedItem.set("Name", ddb.Attribute {
-      type: ddb.AttributeType.String,
-      value: userChoice,
-    });
-    updatedItem.set("Score", ddb.Attribute {
-      type: ddb.AttributeType.Number,
-      value: "${num.fromStr(winningItem.get("Score")) + 1}",
-    });
-    table.putItem(updatedItem.copy());
-
-    // update the options array
-    let updatedOptions = MutArray<Map<str>>[];
-    for option in options {
-      if option.get("Name") == userChoice {
-        updatedOptions.push({
-          "Name" => userChoice,
-          "Score" => "${num.fromStr(option.get("Score")) + 1}",
-        });
-      } else {
-        updatedOptions.push(option);
-      }
-    }
-
-    return cloud.ApiResponse {
-      headers: {
-      "Access-Control-Allow-Headers" => "*",
-      "Access-Control-Allow-Origin" => "*",
-      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
-    },
-      status: 200,
-      body: Json.stringify({
-        "updatedOptions": Util.mutArrayMapToJson(updatedOptions),
-      }),
-    };
-  } else {
-    return cloud.ApiResponse {
-      headers: {
-      "Access-Control-Allow-Headers" => "*",
-      "Access-Control-Allow-Origin" => "*",
-      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
-    },
-      status: 400,
-      body: Json.stringify({
-        "error": "User choice does not match options",
-      }),
-    };
-  }
+    status: 200,
+    body: Json.stringify(items),
+  };
 });
 
-// --- tests ---
+// Select the winner between a pair of options
+api.post("/selectWinner", inflight (req) => {
+  let body = Json.parse(req.body ?? "");
+  log(Json.stringify(body, 2));
+  // TODO: https://github.com/winglang/wing/pull/3648
+  let selections = Util.jsonToSelectWinnerRequest(body);
+
+  let newScores = store.updateScores(selections.winner, selections.loser);
+  let payload = SelectWinnerResponse {
+    winner: newScores.at(0),
+    loser: newScores.at(1),
+  };
+
+  return cloud.ApiResponse {
+    headers: {
+    "Access-Control-Allow-Headers" => "*",
+    "Access-Control-Allow-Origin" => "*",
+    "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+  },
+    status: 200,
+    body: Json.stringify(payload),
+  };
+});

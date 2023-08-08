@@ -1,7 +1,3 @@
-exports.jsonToArray = function(value) {
-    return value;
-}
-
-exports.mutArrayMapToJson = function(value) {
+exports.jsonToSelectWinnerRequest = function(value) {
     return value;
 }
