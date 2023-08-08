@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 interface Config {
-  baseUrl: string;
+  apiUrl: string;
 }
 
 interface Entry {
@@ -18,9 +18,9 @@ const fetchConfig = async () => {
   return config;
 }
 
-const fetchItems = async () => {
-  const baseUrl = (await fetchConfig()).baseUrl;
-  const response = await fetch(baseUrl + "/items");
+const fetchLeaderboard = async () => {
+  const apiUrl = (await fetchConfig()).apiUrl;
+  const response = await fetch(apiUrl + "/leaderboard");
   if (!response.ok) {
     throw new Error('Failed to fetch leaderboard data');
   }
@@ -29,8 +29,8 @@ const fetchItems = async () => {
 }
 
 const fetchChoices = async () => {
-  const baseUrl = (await fetchConfig()).baseUrl;
-  const response = await fetch(baseUrl + "/requestChoices", {
+  const apiUrl = (await fetchConfig()).apiUrl;
+  const response = await fetch(apiUrl + "/requestChoices", {
     method: "POST",
   });
   if (!response.ok) {
@@ -40,14 +40,27 @@ const fetchChoices = async () => {
   return jsonData;
 }
 
+const submitVote = async (winner: string, loser: string) => {
+  const apiUrl = (await fetchConfig()).apiUrl;
+  const response = await fetch(apiUrl + "/selectWinner", {
+    method: "POST",
+    body: JSON.stringify({ winner, loser }),
+  });
+  if (!response.ok) {
+    console.error('Failed to submit vote');
+  }
+  const jsonData: { winner: number; loser: number; } = await response.json();
+  return jsonData;
+}
+
 interface LeaderboardProps {
   swapViews: () => void;
 }
 
 const Leaderboard = (props: LeaderboardProps) => {
-  const [data, setData] = useState<Entry[]>([]);
+  const [entries, setEntries] = useState<Entry[]>([]);
   useEffect(() => {
-    fetchItems().then((items) => setData(items));
+    fetchLeaderboard().then((items) => setEntries(items));
   }, []);
 
   return (
@@ -61,7 +74,7 @@ const Leaderboard = (props: LeaderboardProps) => {
           </tr>
         </thead>
         <tbody>
-          {data.sort((a, b) => b.score - a.score).map((item) => (
+          {entries.sort((a, b) => b.score - a.score).map((item) => (
             <tr key={item.name}>
               <td>{item.name}</td>
               <td>{item.score}</td>
@@ -80,20 +93,53 @@ interface VotingProps {
 
 const Voting = (props: VotingProps) => {
   const [choices, setChoices] = useState<string[]>([]);
+  const [scores, setScores] = useState<(number | null)[]>([null, null]);
   useEffect(() => {
     fetchChoices().then((choices) => setChoices(choices));
   }, []);
+
+  const [winner, setWinner] = useState<string | null>(null);
+  const selectWinner = async (winner: string, loser: string) => {
+    const { winner: winnerScore, loser: loserScore } = await submitVote(winner, loser);
+    if (winner === choices[0]) {
+      setScores([winnerScore, loserScore]);
+    } else {
+      setScores([loserScore, winnerScore]);
+    }
+    setWinner(winner);
+  };
+
+  const reset = async () => {
+    setWinner(null);
+    setScores([null, null]);
+    const choices = await fetchChoices();
+    setChoices(choices);
+  };
+
+  const renderVoteButtonOrOutcome = (idx: number) => {
+    if (winner === null) {
+      return <button onClick={() => selectWinner(choices[idx], choices[1 - idx])}>Vote</button>;
+    }
+    return <p>{winner === choices[idx] ? "Winner" : "Loser"} (new score: {scores[idx]})</p>
+  }
 
   return (
     <div>
       <h2>Which is better?</h2>
       <div className="choices">
-        {choices.map((item) => (
-          <div key={item} className="choice">
-            <div className="name">{item}</div>
-            <button className="button">Vote</button>
-          </div>
-        ))}
+        <div className="choice1">
+          <h3 className="name">{choices[0]}</h3>
+          {renderVoteButtonOrOutcome(0)}
+        </div>
+        <div className="choice2">
+          <h3 className="name">{choices[1]}</h3>
+          {renderVoteButtonOrOutcome(0)}
+        </div>
+        {
+          winner !== null && (
+            <button onClick={() => reset()}>Next matchup</button>
+          )
+        }
       </div>
       <button onClick={props.swapViews}>Leaderboard</button>
     </div>
