@@ -133,7 +133,7 @@ const Voting = (props: VotingProps) => {
         </div>
         <div className="choice2">
           <h3 className="name">{choices[1]}</h3>
-          {renderVoteButtonOrOutcome(0)}
+          {renderVoteButtonOrOutcome(1)}
         </div>
         {
           winner !== null && (
