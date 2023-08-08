@@ -50,7 +50,7 @@ class Util {
 class Store {
   table: ddb.DynamoDBTable;
   init() {
-    this.table = new ddb.DynamoDBTable(hashKey: "Name") as "Items";
+    this.table = new ddb.DynamoDBTable(hashKey: "Name") as "Entries";
   }
 
   inflight setEntry(entry: Entry) {
@@ -58,16 +58,16 @@ class Store {
   }
 
   inflight getRandomPair(): Array<Entry> {
-    let items = this.table.scan();
+    let entries = this.table.scan();
 
-    let firstIdx = math.floor(math.random() * items.length);
-    let var secondIdx = math.floor(math.random() * items.length);
+    let firstIdx = math.floor(math.random() * entries.length);
+    let var secondIdx = math.floor(math.random() * entries.length);
     while secondIdx == firstIdx {
-      secondIdx = math.floor(math.random() * items.length);
+      secondIdx = math.floor(math.random() * entries.length);
     }
 
-    let first = _mapToEntry(items.at(firstIdx));
-    let second = _mapToEntry(items.at(secondIdx));
+    let first = _mapToEntry(entries.at(firstIdx));
+    let second = _mapToEntry(entries.at(secondIdx));
     return [first, second];
   }
 
@@ -101,6 +101,7 @@ class Store {
 
 let store = new Store() as "VotingAppStore";
 
+// about 40 items... any more and we need to start paginating
 let foods = [
   "Nigiri sushi",
   "Pizza margherita",
@@ -163,10 +164,10 @@ website.addJson("config.json", { apiUrl: api.url });
 
 // Select two random items from the list of items for the user to choose between
 api.post("/requestChoices", inflight (_) => {
-  let items = store.getRandomPair();
-  let itemNames = MutArray<str>[];
-  for item in items {
-    itemNames.push(item.name);
+  let entries = store.getRandomPair();
+  let entryNames = MutArray<str>[];
+  for entry in entries {
+    entryNames.push(entry.name);
   }
   return cloud.ApiResponse {
     // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
@@ -176,13 +177,13 @@ api.post("/requestChoices", inflight (_) => {
       "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
     },
     status: 200,
-    body: Json.stringify(itemNames),
+    body: Json.stringify(entryNames),
   };
 });
 
-// Obtain a list of all items and their scores
-api.get("/items", inflight (_) => {
-  let items = store.list();
+// Obtain a list of all entries and their scores
+api.get("/leaderboard", inflight (_) => {
+  let entries = store.list();
   return cloud.ApiResponse {
     // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
     headers: {
@@ -191,7 +192,7 @@ api.get("/items", inflight (_) => {
       "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
     },
     status: 200,
-    body: Json.stringify(items),
+    body: Json.stringify(entries),
   };
 });
 
