@@ -9,10 +9,6 @@ interface Entry {
   score: number;
 }
 
-interface LeaderboardProps {
-  swapViews: () => void;
-}
-
 const fetchConfig = async () => {
   const response = await fetch("./config.json");
   if (!response.ok) {
@@ -42,6 +38,10 @@ const fetchChoices = async () => {
   }
   const jsonData: string[] = await response.json();
   return jsonData;
+}
+
+interface LeaderboardProps {
+  swapViews: () => void;
 }
 
 const Leaderboard = (props: LeaderboardProps) => {
