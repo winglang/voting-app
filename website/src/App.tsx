@@ -91,15 +91,27 @@ interface VotingProps {
   swapViews: () => void;
 }
 
+const Loading = ({visible} : {visible: boolean}) => {
+  return visible ? <div>Loading...</div> : null;
+}
+ 
 const Voting = (props: VotingProps) => {
   const [choices, setChoices] = useState<string[]>([]);
   const [scores, setScores] = useState<(number | null)[]>([null, null]);
+  const [loading, setLoading] = useState(false);
+  const [loadingScores, setLoadingScores] = useState(false);
+  
   useEffect(() => {
-    fetchChoices().then((choices) => setChoices(choices));
+    setLoading(true);
+    fetchChoices().then((choices) => {
+      setChoices(choices);
+      setLoading(false);
+    });
   }, []);
 
   const [winner, setWinner] = useState<string | null>(null);
   const selectWinner = async (winner: string, loser: string) => {
+    setLoadingScores(true);
     const { winner: winnerScore, loser: loserScore } = await submitVote(winner, loser);
     if (winner === choices[0]) {
       setScores([winnerScore, loserScore]);
@@ -107,41 +119,58 @@ const Voting = (props: VotingProps) => {
       setScores([loserScore, winnerScore]);
     }
     setWinner(winner);
+    setLoadingScores(false);
   };
 
   const reset = async () => {
     setWinner(null);
+    setLoading(true);
     setScores([null, null]);
     const choices = await fetchChoices();
     setChoices(choices);
+    setLoading(false);
   };
 
   const renderVoteButtonOrOutcome = (idx: number) => {
-    if (winner === null) {
-      return <button onClick={() => selectWinner(choices[idx], choices[1 - idx])}>Vote</button>;
+    if (loadingScores) {
+      return <Loading visible={loadingScores}/>
     }
-    return <p>{winner === choices[idx] ? "Winner" : "Loser"} (new score: {scores[idx]})</p>
+    if (winner === null) {
+      return <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded" onClick={() => selectWinner(choices[idx], choices[1 - idx])}>Vote</button>;
+    } else {
+      return <p>{winner === choices[idx] ? "Winner" : "Loser"} (new score: {scores[idx]})</p>
+    }
   }
 
   return (
-    <div>
-      <h2>Which is better?</h2>
-      <div className="choices">
+    <div className="px-8 w-full h-full flex-col items-center justify-center">
+      <h2 className="text-slate-700 font-bold text-4xl">Which is better?</h2>
+      <div className="choices flex gap-2">
         <div className="choice1">
-          <h3 className="name">{choices[0]}</h3>
-          {renderVoteButtonOrOutcome(0)}
+          <Loading visible={loading}/>
+          {!loading && (
+            <div>
+              <h3 className="name">{choices[0]}</h3>
+              {renderVoteButtonOrOutcome(0)}
+            </div>
+          )}
         </div>
         <div className="choice2">
-          <h3 className="name">{choices[1]}</h3>
-          {renderVoteButtonOrOutcome(1)}
-        </div>
+          <Loading visible={loading}/>
+          {!loading && (
+            <div>
+              <h3 className="name">{choices[1]}</h3>
+              {renderVoteButtonOrOutcome(1)}
+            </div>
+          )}
+          </div>
         {
           winner !== null && (
-            <button onClick={() => reset()}>Next matchup</button>
+            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded" onClick={() => reset()} disabled={loading}>{loading ?"Loading..." : "Next matchup"}</button>
           )
         }
       </div>
-      <button onClick={props.swapViews}>Leaderboard</button>
+      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded" onClick={props.swapViews}>Leaderboard</button>
     </div>
   )
 }
@@ -150,6 +179,7 @@ type View = "voting" | "leaderboard";
 
 function App() {
   let [view, setView] = useState<View>("voting");
+  
   const swapViews = () => {
     setView(view === "voting" ? "leaderboard" : "voting");
   };
