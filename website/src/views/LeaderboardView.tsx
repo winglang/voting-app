@@ -14,8 +14,8 @@ export const LeaderboardView = () => {
   }, []);
 
   return (
-    <div className="max-h-[23rem] overflow-y-auto">
-      <table className="divide-y divide-slate-300 min-w-[20rem]">
+    <div className="max-h-[23rem] overflow-y-auto h-full">
+      <table className="divide-y divide-slate-300 min-w-[20rem] h-full">
         <thead>
           <tr>
             <th
@@ -35,11 +35,13 @@ export const LeaderboardView = () => {
         <tbody className="divide-y divide-slate-300">
           {loading && (
             <tr>
-              <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-0 text-center w-full">
-                <SpinnerLoader />
-              </td>
-              <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500 text-right w-32">
-                <SpinnerLoader />
+              <td
+                colSpan={2}
+                className="whitespace-nowrap px-3 py-4 text-sm text-slate-500 text-center w-32"
+              >
+                <div className="w-full flex justify-center flex-col grow">
+                  <SpinnerLoader />
+                </div>
               </td>
             </tr>
           )}
