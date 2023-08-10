@@ -39,7 +39,7 @@ export const LeaderboardView = () => {
                 colSpan={2}
                 className="whitespace-nowrap px-3 py-4 text-sm text-slate-500 text-center w-32"
               >
-                <div className="w-full flex justify-center flex-col grow">
+                <div className="w-full flex justify-center flex-col grow opacity-50">
                   <SpinnerLoader />
                 </div>
               </td>
