@@ -1,5 +1,6 @@
 import { Button } from "./Button";
 import classnames from "classnames";
+import { SpinnerLoader } from "./SpinnerLoader";
 
 export interface VoteItemProps {
   name: string;
@@ -22,18 +23,20 @@ export const VoteItem = ({
 }: VoteItemProps) => {
   return (
     <div className="text-center">
-      <div className="space-y-2">
-        <h3 className="text-lg truncate">{name}</h3>
-        <div className="relative w-32 h-32 mx-auto">
-          <div className="w-32 h-32 rounded mx-auto bg-sky-300 animate-pulse absolute shadow" />
-          {imageUrl !== "" && (
-            <img
-              className="w-32 h-32 object-fill rounded absolute z-10"
-              src={imageUrl}
-              alt={name}
-            />
-          )}
+      <h3 className="text-lg truncate h-8 text-slate-700">{name}</h3>
+      <div className="relative w-32 h-32 mx-auto rounded-lg truncate">
+        <div className="w-full h-full bg-sky-100 animate-pulse absolute shadow items-center justify-center flex opacity-50">
+          <SpinnerLoader />
         </div>
+        {imageUrl !== "" && (
+          <img
+            className="w-full h-full object-fill absolute z-10"
+            src={imageUrl}
+            alt={name}
+          />
+        )}
+      </div>
+      <div className="pt-3">
         {!winner && (
           <Button
             onClick={onClick}

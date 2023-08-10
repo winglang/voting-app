@@ -7,6 +7,7 @@ export interface ButtonProps {
   onClick: () => void;
   loading?: boolean;
   disabled?: boolean;
+  className?: string;
 }
 
 export const Button = ({
@@ -15,14 +16,16 @@ export const Button = ({
   onClick,
   loading = false,
   disabled = false,
+  className,
 }: ButtonProps) => {
   return (
     <button
       className={classnames(
         primary && "bg-sky-600 hover:bg-sky-700 text-white font-bold",
-        !primary && "bg-sky-100 hover:bg-sky-300 text-slate-800",
+        !primary && "bg-sky-100 hover:bg-sky-300 text-slate-700",
         "py-1 px-3 rounded shadow",
-        { "opacity-50 cursor-not-allowed": loading || disabled }
+        { "opacity-50 cursor-not-allowed": loading || disabled },
+        className
       )}
       onClick={onClick}
       disabled={disabled || loading}

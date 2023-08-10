@@ -50,38 +50,37 @@ export const VotingView = () => {
   };
 
   return (
-    <div className="space-y-8 py-10">
-      <div className="choices space-y-4">
-        <div className="flex gap-x-8">
-          {choices.map((choice, index) => (
-            <div className="w-1/2">
-              <VoteItem
-                key={index}
-                name={choice}
-                imageUrl={
-                  loading
-                    ? ""
-                    : `https://source.unsplash.com/featured/128x128/?${choice}&category=food`
-                }
-                onClick={() => selectWinner(choice)}
-                disabled={loadingScores}
-                loading={loadingScores && selectedWinnerIdx === index}
-                winner={winner}
-                score={scores[index]}
-              />
-            </div>
-          ))}
-        </div>
-        {winner !== null && (
-          <div className="flex justify-center pt-4">
-            <Button
-              onClick={() => reset()}
-              label="Next matchup"
-              loading={loading}
+    <div className="choices space-y-4">
+      <div className="flex gap-x-8">
+        {choices.map((choice, index) => (
+          <div className="w-1/2">
+            <VoteItem
+              key={index}
+              name={choice}
+              imageUrl={
+                loading
+                  ? ""
+                  : `https://source.unsplash.com/featured/128x128/?${choice}&category=food`
+              }
+              onClick={() => selectWinner(choice)}
+              disabled={loading || loadingScores}
+              loading={loadingScores && selectedWinnerIdx === index}
+              winner={winner}
+              score={scores[index]}
             />
           </div>
-        )}
+        ))}
       </div>
+      {winner !== null && (
+        <div className="flex justify-center pt-4">
+          <Button
+            onClick={() => reset()}
+            label="Next matchup"
+            loading={loading}
+            disabled={loadingScores}
+          />
+        </div>
+      )}
     </div>
   );
 };
