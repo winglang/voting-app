@@ -1,10 +1,11 @@
 import { Button } from "./Button";
 import classnames from "classnames";
 import { SpinnerLoader } from "./SpinnerLoader";
+import { useMemo } from "react";
 
 export interface VoteItemProps {
   name: string;
-  imageUrl: string;
+  image?: string;
   onClick: () => void;
   disabled?: boolean;
   loading?: boolean;
@@ -15,27 +16,64 @@ export interface VoteItemProps {
 export const VoteItem = ({
   name,
   onClick,
-  imageUrl,
+  image,
   disabled,
   loading,
   winner,
   score,
 }: VoteItemProps) => {
+  const rotateStyle = useMemo(() => {
+    return {
+      transform: winner && "rotateY(180deg)",
+    };
+  }, [winner]);
+
   return (
     <div className="text-center">
-      <h3 className="text-3xl truncate h-8 mb-5 text-slate-700">{name}</h3>
-      <div className="relative w-32 h-32 mx-auto rounded-lg truncate">
-        <div className="w-full h-full bg-sky-100 animate-pulse absolute shadow items-center justify-center flex opacity-50">
-          <SpinnerLoader />
-        </div>
-        {imageUrl !== "" && (
-          <img
-            className="w-full h-full object-fill absolute z-10"
-            src={imageUrl}
-            alt={name}
-          />
+      <div
+        className={classnames(
+          "rounded-lg bg-white",
+          "transition-transform duration-300 w-full h-full transform"
         )}
+        style={rotateStyle}
+      >
+        <h3
+          className="text-3xl truncate py-2 text-slate-700 px-2 h-12"
+          style={rotateStyle}
+        >
+          {winner && (winner === name ? "🥇" : "🥈")}
+          {!winner && name}
+        </h3>
+
+        <div
+          className="relative h-36 mx-auto rounded-b-lg truncate border-t-2 border-slate-500 bg-sky-100"
+          style={rotateStyle}
+        >
+          <div className="absolute inset-0 flex items-center justify-center opacity-50">
+            <SpinnerLoader />
+          </div>
+
+          {winner && (
+            <div
+              className={classnames(
+                "w-full h-full absolute z-10",
+                winner === name ? "bg-green-100" : "bg-red-100"
+              )}
+            >
+              Score: {Math.max(score!, 0)}
+            </div>
+          )}
+
+          {!winner && image && (
+            <img
+              className="w-full h-full object-cover absolute z-10"
+              src={`${image}`}
+              alt={name}
+            />
+          )}
+        </div>
       </div>
+
       <div className="pt-6">
         {!winner && (
           <Button
@@ -44,16 +82,6 @@ export const VoteItem = ({
             loading={loading}
             disabled={disabled}
           />
-        )}
-        {winner && (
-          <div
-            className={classnames(
-              "h-8",
-              winner === name ? "text-green-600" : "text-red-600"
-            )}
-          >
-            {winner === name ? "🥇" : "👎"} (Score: {Math.max(score!, 0)})
-          </div>
         )}
       </div>
     </div>

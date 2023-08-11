@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { Button } from "../components/Button";
-import { fetchChoices } from "../services/fetchChoices";
+import { Choice, fetchChoices } from "../services/fetchChoices";
 import { submitVote } from "../services/submitVote";
 import { VoteItem } from "../components/VoteItem";
 
 export const VotingView = () => {
-  const [choices, setChoices] = useState<string[]>(["", ""]);
+  const [choices, setChoices] = useState<Choice[]>([
+    { label: "" },
+    { label: "" },
+  ]);
   const [scores, setScores] = useState<number[]>([]);
 
   const [loading, setLoading] = useState(true);
 
-  const [selectedWinnerIdx, setSelectedWinnerIdx] = useState<number>();
   const [loadingScores, setLoadingScores] = useState(false);
 
   useEffect(() => {
@@ -21,21 +23,23 @@ export const VotingView = () => {
   }, []);
 
   const [winner, setWinner] = useState<string>();
-  const selectWinner = async (winner: string) => {
-    const loser = choices.find((choice) => choice !== winner)!;
+  const [selectedChoice, setSelectedChoice] = useState<Choice>();
+
+  const selectWinner = async (winner: Choice) => {
+    setSelectedChoice(winner);
+    const loser = choices.find((choice) => choice.label !== winner.label)!;
 
     setLoadingScores(true);
-    setSelectedWinnerIdx(choices.indexOf(winner));
     const { winner: winnerScore, loser: loserScore } = await submitVote(
-      winner,
-      loser
+      winner.label,
+      loser.label
     );
     if (winner === choices[0]) {
       setScores([winnerScore, loserScore]);
     } else {
       setScores([loserScore, winnerScore]);
     }
-    setWinner(winner);
+    setWinner(winner.label);
     setLoadingScores(false);
   };
 
@@ -43,6 +47,7 @@ export const VotingView = () => {
     setWinner(undefined);
     setLoading(true);
     setScores([]);
+    setChoices([{ label: "" }, { label: "" }]);
     const choices = await fetchChoices();
     setChoices(choices);
     setLoading(false);
@@ -50,20 +55,16 @@ export const VotingView = () => {
 
   return (
     <div className="choices space-y-4">
-      <div className="flex gap-x-8">
+      <div className="flex">
         {choices.map((choice, index) => (
-          <div className="w-1/2">
+          <div className="w-1/2 shrink-0 px-4">
             <VoteItem
               key={index}
-              name={choice}
-              imageUrl={
-                loading
-                  ? ""
-                  : `https://source.unsplash.com/featured/128x128/?${choice}&category=food`
-              }
+              name={choice.label}
+              image={loading ? undefined : choice.imageSvg}
               onClick={() => selectWinner(choice)}
               disabled={loading || loadingScores}
-              loading={loadingScores && selectedWinnerIdx === index}
+              loading={loadingScores && selectedChoice?.label === choice.label}
               winner={winner}
               score={Math.floor(scores[index])}
             />

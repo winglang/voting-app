@@ -14,7 +14,7 @@ export const LeaderboardView = () => {
   }, []);
 
   return (
-    <div className="max-h-[23rem] overflow-y-auto h-full">
+    <div className="max-h-[22rem] overflow-y-auto h-full">
       <table className="divide-y divide-slate-400 min-w-[20rem] h-full">
         <thead>
           <tr>

@@ -15,8 +15,10 @@ function App() {
   return (
     <div className="App absolute inset-0">
       <div className="w-full h-full flex flex-col items-center justify-center">
-        <h1 className="title text-7xl pb-7 font-medium">Battle of the Bites!</h1>
-        <div className="text-2xl w-[30rem] min-h-[35rem] px-10 pt-10 pb-4 bg-sky-200 rounded-lg shadow-xl flex flex-col">
+        <h1 className="title text-7xl pb-7 font-medium">
+          Battle of the Bites!
+        </h1>
+        <div className="text-2xl w-[30rem] min-h-[35rem] px-8 pt-8 pb-4 bg-sky-200 rounded-lg shadow-xl flex flex-col">
           <div className="text-slate-700 text-4xl text-center">
             {view === "voting" ? "Which is better?" : "Leaderboard"}
           </div>
