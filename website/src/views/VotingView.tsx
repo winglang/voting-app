@@ -65,7 +65,7 @@ export const VotingView = () => {
               disabled={loading || loadingScores}
               loading={loadingScores && selectedWinnerIdx === index}
               winner={winner}
-              score={scores[index]}
+              score={Math.floor(scores[index])}
             />
           </div>
         ))}

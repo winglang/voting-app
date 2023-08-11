@@ -100,7 +100,7 @@ class Store {
     let loserScore = this.getEntry(loser).score;
 
     // probability that the winner should have won
-    let pWinner = 1.0 / (1.0 + 10 ** (loserScore - winnerScore) / 400.0);
+    let pWinner = 1.0 / (1.0 + 10 ** ((loserScore - winnerScore) / 400.0));
 
     let winnerNewScore = Util.clamp(winnerScore + 32 * (1.0 - pWinner), 1000, 2000);
     let loserNewScore = Util.clamp(loserScore + 32 * (pWinner - 1.0), 1000, 2000);
