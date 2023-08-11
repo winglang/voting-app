@@ -45,7 +45,6 @@ export const VotingView = () => {
     setScores([]);
     const choices = await fetchChoices();
     setChoices(choices);
-    console.log(choices);
     setLoading(false);
   };
 
