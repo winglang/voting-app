@@ -23,7 +23,7 @@ export const VoteItem = ({
 }: VoteItemProps) => {
   return (
     <div className="text-center">
-      <h3 className="text-lg truncate h-8 text-slate-700">{name}</h3>
+      <h3 className="text-3xl truncate h-8 mb-5 text-slate-700">{name}</h3>
       <div className="relative w-32 h-32 mx-auto rounded-lg truncate">
         <div className="w-full h-full bg-sky-100 animate-pulse absolute shadow items-center justify-center flex opacity-50">
           <SpinnerLoader />
@@ -36,7 +36,7 @@ export const VoteItem = ({
           />
         )}
       </div>
-      <div className="pt-3">
+      <div className="pt-6">
         {!winner && (
           <Button
             onClick={onClick}
