@@ -28,6 +28,10 @@ export const VoteItem = ({
     };
   }, [winner]);
 
+  const safeName = name.replace(/[^a-z0-9]/gi, "");
+  const safeScore = score ?? 1500;
+  const isWinner = winner === name ? -1 : 1;
+
   return (
     <div className="text-center">
       <div
@@ -56,11 +60,37 @@ export const VoteItem = ({
           {winner && (
             <div
               className={classnames(
-                "w-full h-full absolute z-10",
+                "w-full h-full absolute z-10 pt-5",
                 winner === name ? "bg-green-100" : "bg-red-100"
               )}
             >
-              Score: {Math.max(score!, 0)}
+              <style>
+                {`#${safeName}::after {
+  content: counter(${safeName});
+  animation: ${safeName}-anim 1.5s linear;
+  counter-reset: ${safeName} ${score};
+}
+
+@keyframes ${safeName}-anim {
+  0% { counter-reset: ${safeName} ${safeScore + 15 * isWinner}; }
+  3% { counter-reset: ${safeName} ${safeScore + 14 * isWinner}; }
+  6% { counter-reset: ${safeName} ${safeScore + 13 * isWinner}; }
+  9% { counter-reset: ${safeName} ${safeScore + 12 * isWinner}; }
+  12% { counter-reset: ${safeName} ${safeScore + 11 * isWinner}; }
+  15% { counter-reset: ${safeName} ${safeScore + 10 * isWinner}; }
+  18% { counter-reset: ${safeName} ${safeScore + 9 * isWinner}; }
+  21% { counter-reset: ${safeName} ${safeScore + 8 * isWinner}; }
+  24% { counter-reset: ${safeName} ${safeScore + 7 * isWinner}; }
+  27% { counter-reset: ${safeName} ${safeScore + 6 * isWinner}; }
+  30% { counter-reset: ${safeName} ${safeScore + 5 * isWinner}; }
+  33% { counter-reset: ${safeName} ${safeScore + 4 * isWinner}; }
+  36% { counter-reset: ${safeName} ${safeScore + 3 * isWinner}; }
+  43% { counter-reset: ${safeName} ${safeScore + 2 * isWinner}; }
+  66% { counter-reset: ${safeName} ${safeScore + 1 * isWinner}; }
+  100% { counter-reset: ${safeName} ${safeScore}; }
+}`}
+              </style>
+              Score: <span id={safeName}></span>
             </div>
           )}
 
