@@ -50,12 +50,12 @@ export const LeaderboardView = () => {
             .sort((a, b) => b.score - a.score)
             .map((item, index) => (
               <tr key={item.name}>
-                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-lg font-medium text-slate-900 sm:pl-0">
+                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-xl text-slate-900 sm:pl-0">
                   {item.name}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-xl text-slate-500 ">
                   <div className="flex justify-end gap-x-2 leading-7">
-                    <div className="text-xl">
+                    <div>
                       {index === 0 && "🥇"}
                       {index === 1 && "🥈"}
                       {index === 2 && "🥉"}
