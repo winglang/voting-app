@@ -43,6 +43,15 @@ struct SelectWinnerResponse {
 
 class Util {
   extern "./util.js" static inflight jsonToSelectWinnerRequest(json: Json): SelectWinnerRequest;
+
+  static inflight clamp(value: num, min: num, max: num): num {
+    if value < min {
+      return min;
+    } elif value > max {
+      return max;
+    }
+    return value;
+  }
 }
 
 // --- application ---
@@ -55,6 +64,19 @@ class Store {
 
   inflight setEntry(entry: Entry) {
     this.table.putItem(_entryToMap(entry));
+  }
+
+  inflight getEntry(name: str): Entry {
+    let item = this.table.getItem(Map<ddb.Attribute> {
+      "Name" => ddb.Attribute {
+        type: ddb.AttributeType.String,
+        value: name,
+      },
+    });
+    return Entry {
+      name: name,
+      score: num.fromStr(str.fromJson(item.get("Score").value)),
+    };
   }
 
   inflight getRandomPair(): Array<Entry> {
@@ -74,18 +96,14 @@ class Store {
   inflight updateScores(winner: str, loser: str): Array<num> {
     let entries = this.list();
 
-    let var winnerScore = 0;
-    let var loserScore = 0;
-    for entry in entries {
-      if entry.name == winner {
-        winnerScore = entry.score;
-      } elif entry.name == loser {
-        loserScore = entry.score;
-      }
-    }
+    let winnerScore = this.getEntry(winner).score;
+    let loserScore = this.getEntry(loser).score;
 
-    let var winnerNewScore = winnerScore + 1;
-    let var loserNewScore = loserScore - 1;
+    // probability that the winner should have won
+    let pWinner = 1.0 / (1.0 + 10 ** (loserScore - winnerScore) / 400.0);
+
+    let winnerNewScore = Util.clamp(winnerScore + 32 * (1.0 - pWinner), 1000, 2000);
+    let loserNewScore = Util.clamp(loserScore + 32 * (pWinner - 1.0), 1000, 2000);
 
     this.setEntry(Entry { name: winner, score: winnerNewScore });
     this.setEntry(Entry { name: loser, score: loserNewScore });
@@ -154,16 +172,14 @@ new cloud.OnDeploy(inflight () => {
   for food in foods {
     store.setEntry(Entry {
       name: food,
-      score: 0,
+      score: 1500,
     });
   }
 }) as "InitializeTable";
 
 let api = new cloud.Api() as "VotingAppApi";
 
-let website = new cloud.Website(
-  path: "./website/build",
-);
+let website = new cloud.Website(path: "./website/build");
 website.addJson("config.json", { apiUrl: api.url });
 
 // Select two random items from the list of items for the user to choose between
