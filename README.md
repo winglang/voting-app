@@ -15,7 +15,8 @@ Inspired by https://eloeverything.co/.
 
 ## Development
 
-> [!NOTE] This project can't be tested using the Wing simulator yet.
+> **Note**
+> This project can't be tested using the Wing simulator yet.
 
 ### Deployment
 
