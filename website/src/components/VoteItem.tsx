@@ -75,14 +75,12 @@ export const VoteItem = ({
       </div>
 
       <div className="pt-6">
-        {!winner && (
-          <Button
-            onClick={onClick}
-            label="Vote"
-            loading={loading}
-            disabled={disabled}
-          />
-        )}
+        <Button
+          onClick={onClick}
+          label="Vote"
+          loading={loading}
+          disabled={disabled || winner !== undefined}
+        />
       </div>
     </div>
   );
