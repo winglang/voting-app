@@ -46,7 +46,7 @@ export const VoteItem = ({
         </h3>
 
         <div
-          className="relative h-36 mx-auto rounded-b-lg truncate border-t-2 border-slate-500 bg-sky-100"
+          className="relative h-40 mx-auto rounded-b-lg truncate border-t-2 border-slate-500 bg-sky-100"
           style={rotateStyle}
         >
           <div className="absolute inset-0 flex items-center justify-center opacity-50">
