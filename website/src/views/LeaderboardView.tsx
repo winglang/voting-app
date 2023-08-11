@@ -14,25 +14,25 @@ export const LeaderboardView = () => {
   }, []);
 
   return (
-    <div className="max-h-[23rem] overflow-y-auto h-full">
-      <table className="divide-y divide-slate-300 min-w-[20rem] h-full">
+    <div className="max-h-[22rem] overflow-y-auto h-full">
+      <table className="divide-y divide-slate-400 min-w-[20rem] h-full">
         <thead>
           <tr>
             <th
               scope="col"
-              className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-0 w-full"
+              className="py-3.5 pl-4 pr-3 text-left text-xl font-semibold text-slate-900 sm:pl-0 w-full"
             >
               Name
             </th>
             <th
               scope="col"
-              className="px-3 py-3.5 text-right text-sm font-semibold text-slate-900 w-32"
+              className="px-3 py-3.5 text-right text-xl font-semibold text-slate-900 w-32"
             >
               Score
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-300">
+        <tbody className="divide-y divide-slate-400">
           {loading && (
             <tr>
               <td
@@ -50,12 +50,12 @@ export const LeaderboardView = () => {
             .sort((a, b) => b.score - a.score)
             .map((item, index) => (
               <tr key={item.name}>
-                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-0">
+                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-xl text-slate-900 sm:pl-0">
                   {item.name}
                 </td>
-                <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500 ">
+                <td className="whitespace-nowrap px-3 py-4 text-xl text-slate-500 ">
                   <div className="flex justify-end gap-x-2 leading-7">
-                    <div className="text-xl">
+                    <div>
                       {index === 0 && "🥇"}
                       {index === 1 && "🥈"}
                       {index === 2 && "🥉"}
