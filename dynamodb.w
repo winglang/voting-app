@@ -210,6 +210,38 @@ class DynamoDBTable {
     }
   }
 
+  bind(host: std.IInflightHost, ops: Array<str>) {
+    // currently simulator does not require permissions
+    // may change with https://github.com/winglang/wing/issues/3082
+    if let tableAws = this.tableAws {
+      if let host = aws.Function.from(host) {
+        if ops.contains("putItem") {
+          host.addPolicyStatements([aws.PolicyStatement {
+            actions: ["dynamodb:PutItem"],
+            resources: [tableAws.table.arn],
+            effect: aws.Effect.ALLOW,
+          }]);
+        }
+
+        if ops.contains("getItem") {
+          host.addPolicyStatements([aws.PolicyStatement {
+            actions: ["dynamodb:GetItem"],
+            resources: [tableAws.table.arn],
+            effect: aws.Effect.ALLOW,
+          }]);
+        }
+
+        if ops.contains("scan") {
+          host.addPolicyStatements([aws.PolicyStatement {
+            actions: ["dynamodb:Scan"],
+            resources: [tableAws.table.arn],
+            effect: aws.Effect.ALLOW,
+          }]);
+        }
+      }
+    }
+  }
+
   inflight getItem(key: Map<Attribute>): Map<Attribute>? {
     assert(key.size() == 1);
     if let tableSim = this.tableSim {
