@@ -2,8 +2,6 @@ bring "./dynamodb.w" as ddb;
 bring cloud;
 bring math;
 
-// TODO: add image for each item?
-
 // --- types ---
 
 struct Entry {
@@ -66,17 +64,21 @@ class Store {
     this.table.putItem(_entryToMap(entry));
   }
 
-  inflight getEntry(name: str): Entry {
+  inflight getEntry(name: str): Entry? {
     let item = this.table.getItem(Map<ddb.Attribute> {
       "Name" => ddb.Attribute {
         type: ddb.AttributeType.String,
         value: name,
       },
     });
-    return Entry {
-      name: name,
-      score: num.fromStr(str.fromJson(item.get("Score").value)),
-    };
+    if let item = item {
+      return Entry {
+        name: name,
+        score: num.fromStr(str.fromJson(item.get("Score").value)),
+      };
+    } else {
+      return nil;
+    }
   }
 
   inflight getRandomPair(): Array<Entry> {
@@ -96,8 +98,20 @@ class Store {
   inflight updateScores(winner: str, loser: str): Array<num> {
     let entries = this.list();
 
-    let winnerScore = this.getEntry(winner).score;
-    let loserScore = this.getEntry(loser).score;
+    let winnerEntry = this.getEntry(winner);
+    let loserEntry = this.getEntry(loser);
+    let var winnerScore = 0;
+    let var loserScore = 0;
+    if let winnerEntry = winnerEntry {
+      winnerScore = winnerEntry.score;
+    } else {
+      throw("Winner is not a valid item");
+    }
+    if let loserEntry = loserEntry {
+      loserScore = loserEntry.score;
+    } else {
+      throw("Loser is not a valid item");
+    }
 
     // probability that the winner should have won
     let pWinner = 1.0 / (1.0 + 10 ** ((loserScore - winnerScore) / 400.0));
@@ -182,6 +196,12 @@ let api = new cloud.Api() as "VotingAppApi";
 let website = new cloud.Website(path: "./website/build");
 website.addJson("config.json", { apiUrl: api.url });
 
+let corsHeaders = {
+  "Access-Control-Allow-Headers" => "*",
+  "Access-Control-Allow-Origin" => "*",
+  "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
+};
+
 // Select two random items from the list of items for the user to choose between
 api.post("/requestChoices", inflight (_) => {
   let entries = store.getRandomPair();
@@ -190,12 +210,7 @@ api.post("/requestChoices", inflight (_) => {
     entryNames.push(entry.name);
   }
   return cloud.ApiResponse {
-    // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
-    headers: {
-      "Access-Control-Allow-Headers" => "*",
-      "Access-Control-Allow-Origin" => "*",
-      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
-    },
+    headers: corsHeaders,
     status: 200,
     body: Json.stringify(entryNames),
   };
@@ -205,12 +220,7 @@ api.post("/requestChoices", inflight (_) => {
 api.get("/leaderboard", inflight (_) => {
   let entries = store.list();
   return cloud.ApiResponse {
-    // TODO: refactor to a constant - https://github.com/winglang/wing/issues/3119
-    headers: {
-      "Access-Control-Allow-Headers" => "*",
-      "Access-Control-Allow-Origin" => "*",
-      "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
-    },
+    headers: corsHeaders,
     status: 200,
     body: Json.stringify(entries),
   };
@@ -220,21 +230,25 @@ api.get("/leaderboard", inflight (_) => {
 api.post("/selectWinner", inflight (req) => {
   let body = Json.parse(req.body ?? "");
   log(Json.stringify(body, 2));
-  // TODO: https://github.com/winglang/wing/pull/3648
-  let selections = Util.jsonToSelectWinnerRequest(body);
+  let selections = SelectWinnerRequest.fromJson(body);
 
-  let newScores = store.updateScores(selections.winner, selections.loser);
+  let var newScores = Array<num>[];
+  try {
+     newScores = store.updateScores(selections.winner, selections.loser);
+  } catch e {
+    return cloud.ApiResponse {
+      headers: corsHeaders,
+      status: 400,
+      body: "Error: " + Json.stringify(e),
+    };
+  }
   let payload = SelectWinnerResponse {
     winner: newScores.at(0),
     loser: newScores.at(1),
   };
 
   return cloud.ApiResponse {
-    headers: {
-    "Access-Control-Allow-Headers" => "*",
-    "Access-Control-Allow-Origin" => "*",
-    "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
-  },
+    headers: corsHeaders,
     status: 200,
     body: Json.stringify(payload),
   };

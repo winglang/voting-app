@@ -1,5 +1,6 @@
 bring "@cdktf/provider-aws" as tfaws;
 bring aws;
+bring cloud;
 bring util;
 
 // --- dynamodb ---
@@ -15,6 +16,12 @@ struct Attribute {
   value: Json;
 }
 
+class Util {
+  extern "./util.js" static inflight jsonToMutArray(json: Json): MutArray<Map<Attribute>>;
+  extern "./util.js" static inflight jsonToArray(json: Json): Array<Map<Attribute>>;
+  extern "./util.js" static inflight mutArrayToJson(json: MutArray<Map<Attribute>>): Json;
+}
+
 // TODO: https://github.com/winglang/wing/issues/3350
 // typealias Item = Map<Attribute>;
 
@@ -22,29 +29,32 @@ struct DynamoDBTableProps {
   hashKey: str;
 }
 
-// TODO: naive implementation - this doesn't work
 class DynamoDBTableSim {
-  hashKey: str;
+  key: str;
+  data: cloud.Bucket;
 
   init(props: DynamoDBTableProps) {
-    this.hashKey = props.hashKey;
-  }
-
-  inflight data: MutArray<Map<Attribute>>;
-
-  inflight init() {
-    this.data = MutArray<Map<Attribute>>[];
+    this.key = "data.json";
+    this.data = new cloud.Bucket();
+    this.data.addObject(this.key, "[]");
   }
 
   inflight putItem(item: Map<Attribute>) {
-    this.data.push(item);
+    let items = this.data.getJson(this.key);
+    let itemsMut = Util.jsonToMutArray(items);
+    itemsMut.push(item);
+    this.data.putJson(this.key, Util.mutArrayToJson(itemsMut));
   }
 
-  inflight getItem(map: Map<Attribute>): Map<Attribute> {
-    for item in this.data {
+  inflight getItem(map: Map<Attribute>): Map<Attribute>? {
+    let items = this.data.getJson(this.key);
+    let itemsMut = Util.jsonToMutArray(items);
+    for item in itemsMut {
       let var matches = true;
       for key in map.keys() {
-        if item.get(key) != map.get(key) {
+        let attr1 = item.get(key);
+        let attr2 = map.get(key);
+        if attr1.value != attr2.value {
           matches = false;
           break;
         }
@@ -53,11 +63,12 @@ class DynamoDBTableSim {
         return item;
       }
     }
-    throw("Item not found: ${map}");
+    return nil;
   }
 
   inflight scan(): Array<Map<Attribute>> {
-    return this.data.copy();
+    let items = this.data.getJson(this.key);
+    return Util.jsonToArray(items);
   }
 }
 
@@ -199,7 +210,7 @@ class DynamoDBTable {
     }
   }
 
-  inflight getItem(key: Map<Attribute>): Map<Attribute> {
+  inflight getItem(key: Map<Attribute>): Map<Attribute>? {
     assert(key.size() == 1);
     if let tableSim = this.tableSim {
       return tableSim.getItem(key);
