@@ -25,6 +25,9 @@ export async function _getItem(tableName, key) {
   
   const response = await client.send(command);
   console.log(response);
+  if (!data.Item) {
+    return undefined;
+  }
   return response;
 }
 

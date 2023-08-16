@@ -1,5 +1,6 @@
 bring "@cdktf/provider-aws" as tfaws;
 bring aws;
+bring cloud;
 bring util;
 
 // --- dynamodb ---
@@ -15,6 +16,12 @@ struct Attribute {
   value: Json;
 }
 
+class Util {
+  extern "./util.js" static inflight jsonToMutArray(json: Json): MutArray<Map<Attribute>>;
+  extern "./util.js" static inflight jsonToArray(json: Json): Array<Map<Attribute>>;
+  extern "./util.js" static inflight mutArrayToJson(json: MutArray<Map<Attribute>>): Json;
+}
+
 // TODO: https://github.com/winglang/wing/issues/3350
 // typealias Item = Map<Attribute>;
 
@@ -22,16 +29,54 @@ struct DynamoDBTableProps {
   hashKey: str;
 }
 
-class DynamoDBTable {
+class DynamoDBTableSim {
+  key: str;
+  data: cloud.Bucket;
+
+  init(props: DynamoDBTableProps) {
+    this.key = "data.json";
+    this.data = new cloud.Bucket();
+    this.data.addObject(this.key, "[]");
+  }
+
+  inflight putItem(item: Map<Attribute>) {
+    let items = this.data.getJson(this.key);
+    let itemsMut = Util.jsonToMutArray(items);
+    itemsMut.push(item);
+    this.data.putJson(this.key, Util.mutArrayToJson(itemsMut));
+  }
+
+  inflight getItem(map: Map<Attribute>): Map<Attribute>? {
+    let items = this.data.getJson(this.key);
+    let itemsMut = Util.jsonToMutArray(items);
+    for item in itemsMut {
+      let var matches = true;
+      for key in map.keys() {
+        let attr1 = item.get(key);
+        let attr2 = map.get(key);
+        if attr1.value != attr2.value {
+          matches = false;
+          break;
+        }
+      }
+      if matches {
+        return item;
+      }
+    }
+    return nil;
+  }
+
+  inflight scan(): Array<Map<Attribute>> {
+    let items = this.data.getJson(this.key);
+    return Util.jsonToArray(items);
+  }
+}
+
+class DynamoDBTableAws {
   table: tfaws.dynamodbTable.DynamodbTable;
   tableName: str;
   hashKey: str;
   init(props: DynamoDBTableProps) {
-    let target = util.env("WING_TARGET");
-    if target != "tf-aws" {
-      throw("Unsupported target: ${target} (expected 'tf-aws')");
-    }
-
     this.hashKey = props.hashKey;
     this.table = new tfaws.dynamodbTable.DynamodbTable(
       name: "${this.node.id}-${this.node.addr.substring(this.node.addr.length - 8)}",
@@ -147,5 +192,86 @@ class DynamoDBTable {
     } elif type == "B" {
       return AttributeType.Binary;
     }
+  }
+}
+
+class DynamoDBTable {
+  tableSim: DynamoDBTableSim?;
+  tableAws: DynamoDBTableAws?;
+
+  init(props: DynamoDBTableProps) {
+    let target = util.env("WING_TARGET");
+    if target == "sim" {
+      this.tableSim = new DynamoDBTableSim(props);
+    } elif target == "tf-aws" {
+      this.tableAws = new DynamoDBTableAws(props);
+    } else {
+      throw("DynamoDBTable doesn't support target '${target}'");
+    }
+  }
+
+  bind(host: std.IInflightHost, ops: Array<str>) {
+    // currently simulator does not require permissions
+    // may change with https://github.com/winglang/wing/issues/3082
+    if let tableAws = this.tableAws {
+      if let host = aws.Function.from(host) {
+        if ops.contains("putItem") {
+          host.addPolicyStatements([aws.PolicyStatement {
+            actions: ["dynamodb:PutItem"],
+            resources: [tableAws.table.arn],
+            effect: aws.Effect.ALLOW,
+          }]);
+        }
+
+        if ops.contains("getItem") {
+          host.addPolicyStatements([aws.PolicyStatement {
+            actions: ["dynamodb:GetItem"],
+            resources: [tableAws.table.arn],
+            effect: aws.Effect.ALLOW,
+          }]);
+        }
+
+        if ops.contains("scan") {
+          host.addPolicyStatements([aws.PolicyStatement {
+            actions: ["dynamodb:Scan"],
+            resources: [tableAws.table.arn],
+            effect: aws.Effect.ALLOW,
+          }]);
+        }
+      }
+    }
+  }
+
+  inflight getItem(key: Map<Attribute>): Map<Attribute>? {
+    assert(key.size() == 1);
+    if let tableSim = this.tableSim {
+      return tableSim.getItem(key);
+    }
+    if let tableAws = this.tableAws {
+      return tableAws.getItem(key);
+    }
+    throw("no table instance found for getItem");
+  }
+
+  inflight putItem(item: Map<Attribute>) {
+    if let tableSim = this.tableSim {
+      tableSim.putItem(item);
+      return;
+    }
+    if let tableAws = this.tableAws {
+      tableAws.putItem(item);
+      return;
+    }
+    throw("no table instance found for putItem");
+  }
+
+  inflight scan(): Array<Map<Attribute>> {
+    if let tableSim = this.tableSim {
+      return tableSim.scan();
+    }
+    if let tableAws = this.tableAws {
+      return tableAws.scan();
+    }
+    throw("no table instance found for scan");
   }
 }
