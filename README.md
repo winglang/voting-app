@@ -40,3 +40,11 @@ Then:
 Replace <API GATEWAY URL> with the URL of the API Gateway that was created when you deployed the app.
 
 5. Run `npm run start` from `website` to start the development server. Any changes you make to the website will be automatically reflected in the browser.
+
+## Contributions
+
+Pull requests are welcome.
+
+## License
+
+This project is distributed under the [MIT](./LICENSE) license.
