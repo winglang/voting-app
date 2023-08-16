@@ -15,9 +15,6 @@ Inspired by https://eloeverything.co/.
 
 ## Development
 
-> **Note**
-> This project can't be tested using the Wing simulator yet.
-
 ### Deployment
 
 To deploy your own copy of the app, first make sure you have AWS credentials configured in your terminal for the account and region you want to deploy to.
