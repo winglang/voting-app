@@ -229,7 +229,7 @@ api.get("/leaderboard", inflight (_) => {
 // Select the winner between a pair of options
 api.post("/selectWinner", inflight (req) => {
   let body = Json.parse(req.body ?? "");
-  log(Json.stringify(body, {indent: 2}));
+  log(Json.stringify(body, indent: 2));
   let selections = SelectWinnerRequest.fromJson(body);
 
   let var newScores = Array<num>[];
