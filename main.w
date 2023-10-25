@@ -1,6 +1,7 @@
 bring "./dynamodb.w" as ddb;
 bring cloud;
 bring math;
+bring "cdktf" as cdktf;
 
 // --- types ---
 
@@ -192,9 +193,10 @@ new cloud.OnDeploy(inflight () => {
 }) as "InitializeTable";
 
 let api = new cloud.Api(cors: true) as "VotingAppApi";
+let localStackApiURL = cdktf.Fn.replace(api.url, "us-east-1.amazonaws.com", "localhost.localstack.cloud:4566");
 
 let website = new cloud.Website(path: "./website/build");
-website.addJson("config.json", { apiUrl: api.url });
+website.addJson("config.json", { apiUrl: localStackApiURL });
 
 // Select two random items from the list of items for the user to choose between
 api.post("/requestChoices", inflight (_) => {
@@ -239,8 +241,10 @@ api.post("/selectWinner", inflight (req) => {
   };
 
   return cloud.ApiResponse {
-    headers: corsHeaders,
     status: 200,
     body: Json.stringify(payload),
   };
 });
+
+new cdktf.TerraformOutput(value: localStackApiURL) as "ApiUrl";
+new cdktf.TerraformOutput(value: "${website.url}:4566") as "WebsiteUrl";
