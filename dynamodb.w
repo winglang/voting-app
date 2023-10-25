@@ -92,34 +92,6 @@ pub class DynamoDBTableAws {
     this.tableName = this.table.name;
   }
 
-  bind(host: std.IInflightHost, ops: Array<str>) {
-    if let host = aws.Function.from(host) {
-      if ops.contains("putItem") {
-        host.addPolicyStatements(aws.PolicyStatement {
-          actions: ["dynamodb:PutItem"],
-          resources: [this.table.arn],
-          effect: aws.Effect.ALLOW,
-        });
-      }
-
-      if ops.contains("getItem") {
-        host.addPolicyStatements(aws.PolicyStatement {
-          actions: ["dynamodb:GetItem"],
-          resources: [this.table.arn],
-          effect: aws.Effect.ALLOW,
-        });
-      }
-
-      if ops.contains("scan") {
-        host.addPolicyStatements(aws.PolicyStatement {
-          actions: ["dynamodb:Scan"],
-          resources: [this.table.arn],
-          effect: aws.Effect.ALLOW,
-        });
-      }
-    }
-  }
-
   extern "./dynamo.js" static inflight _putItem(tableName: str, item: Json): void;
   extern "./dynamo.js" static inflight _getItem(tableName: str, key: Json): Map<Map<Map<str>>>;
   extern "./dynamo.js" static inflight _scan(tableName: str): Map<Array<Map<Map<str>>>>;
@@ -210,7 +182,8 @@ pub class DynamoDBTable {
     }
   }
 
-  bind(host: std.IInflightHost, ops: Array<str>) {
+  pub onLift(host: std.IInflightHost, ops: Array<str>) {
+    log("onLift called on DynamoDBTable with ops ${ops}");
     // currently simulator does not require permissions
     // may change with https://github.com/winglang/wing/issues/3082
     if let tableAws = this.tableAws {
