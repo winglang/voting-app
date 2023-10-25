@@ -5,21 +5,21 @@ bring util;
 
 // --- dynamodb ---
 
-enum AttributeType {
+pub enum AttributeType {
   String,
   Number, // note: DynamoDB requires you to provide the `value` as a string
   Binary,
 }
 
-struct Attribute {
+pub struct Attribute {
   type: AttributeType;
   value: Json;
 }
 
-class Util {
-  extern "./util.js" static inflight jsonToMutArray(json: Json): MutArray<Map<Attribute>>;
-  extern "./util.js" static inflight jsonToArray(json: Json): Array<Map<Attribute>>;
-  extern "./util.js" static inflight mutArrayToJson(json: MutArray<Map<Attribute>>): Json;
+pub class Util {
+  extern "./util.js" pub static inflight jsonToMutArray(json: Json): MutArray<Map<Attribute>>;
+  extern "./util.js" pub static inflight jsonToArray(json: Json): Array<Map<Attribute>>;
+  extern "./util.js" pub static inflight mutArrayToJson(json: MutArray<Map<Attribute>>): Json;
 }
 
 // TODO: https://github.com/winglang/wing/issues/3350
@@ -29,7 +29,7 @@ struct DynamoDBTableProps {
   hashKey: str;
 }
 
-class DynamoDBTableSim {
+pub class DynamoDBTableSim {
   key: str;
   data: cloud.Bucket;
 
@@ -39,14 +39,14 @@ class DynamoDBTableSim {
     this.data.addObject(this.key, "[]");
   }
 
-  inflight putItem(item: Map<Attribute>) {
+  pub inflight putItem(item: Map<Attribute>) {
     let items = this.data.getJson(this.key);
     let itemsMut = Util.jsonToMutArray(items);
     itemsMut.push(item);
     this.data.putJson(this.key, Util.mutArrayToJson(itemsMut));
   }
 
-  inflight getItem(map: Map<Attribute>): Map<Attribute>? {
+  pub inflight getItem(map: Map<Attribute>): Map<Attribute>? {
     let items = this.data.getJson(this.key);
     let itemsMut = Util.jsonToMutArray(items);
     for item in itemsMut {
@@ -66,14 +66,14 @@ class DynamoDBTableSim {
     return nil;
   }
 
-  inflight scan(): Array<Map<Attribute>> {
+  pub inflight scan(): Array<Map<Attribute>> {
     let items = this.data.getJson(this.key);
     return Util.jsonToArray(items);
   }
 }
 
-class DynamoDBTableAws {
-  table: tfaws.dynamodbTable.DynamodbTable;
+pub class DynamoDBTableAws {
+  pub table: tfaws.dynamodbTable.DynamodbTable;
   tableName: str;
   hashKey: str;
   init(props: DynamoDBTableProps) {
@@ -95,48 +95,48 @@ class DynamoDBTableAws {
   bind(host: std.IInflightHost, ops: Array<str>) {
     if let host = aws.Function.from(host) {
       if ops.contains("putItem") {
-        host.addPolicyStatements([aws.PolicyStatement {
+        host.addPolicyStatements(aws.PolicyStatement {
           actions: ["dynamodb:PutItem"],
           resources: [this.table.arn],
           effect: aws.Effect.ALLOW,
-        }]);
+        });
       }
 
       if ops.contains("getItem") {
-        host.addPolicyStatements([aws.PolicyStatement {
+        host.addPolicyStatements(aws.PolicyStatement {
           actions: ["dynamodb:GetItem"],
           resources: [this.table.arn],
           effect: aws.Effect.ALLOW,
-        }]);
+        });
       }
 
       if ops.contains("scan") {
-        host.addPolicyStatements([aws.PolicyStatement {
+        host.addPolicyStatements(aws.PolicyStatement {
           actions: ["dynamodb:Scan"],
           resources: [this.table.arn],
           effect: aws.Effect.ALLOW,
-        }]);
+        });
       }
     }
   }
 
-  extern "./dynamo.js" inflight _putItem(tableName: str, item: Json): void;
-  extern "./dynamo.js" inflight _getItem(tableName: str, key: Json): Map<Map<Map<str>>>;
-  extern "./dynamo.js" inflight _scan(tableName: str): Map<Array<Map<Map<str>>>>;
+  extern "./dynamo.js" static inflight _putItem(tableName: str, item: Json): void;
+  extern "./dynamo.js" static inflight _getItem(tableName: str, key: Json): Map<Map<Map<str>>>;
+  extern "./dynamo.js" static inflight _scan(tableName: str): Map<Array<Map<Map<str>>>>;
 
-  inflight putItem(item: Map<Attribute>) {
+  pub inflight putItem(item: Map<Attribute>) {
     let json = this._itemToJson(item);
-    this._putItem(this.tableName, json);
+    DynamoDBTableAws._putItem(this.tableName, json);
   }
 
-  inflight getItem(key: Map<Attribute>): Map<Attribute> {
+  pub inflight getItem(key: Map<Attribute>): Map<Attribute> {
     let json = this._itemToJson(key);
-    let result = this._getItem(this.tableName, json);
+    let result = DynamoDBTableAws._getItem(this.tableName, json);
     return this._rawMapToItem(result.get("Item"));
   }
 
-  inflight scan(): Array<Map<Attribute>> {
-    let result = this._scan(this.tableName);
+  pub inflight scan(): Array<Map<Attribute>> {
+    let result = DynamoDBTableAws._scan(this.tableName);
     let rawItems = result.get("Items");
     let items = MutArray<Map<Attribute>>[];
     for rawItem in rawItems {
@@ -195,7 +195,7 @@ class DynamoDBTableAws {
   }
 }
 
-class DynamoDBTable {
+pub class DynamoDBTable {
   tableSim: DynamoDBTableSim?;
   tableAws: DynamoDBTableAws?;
 
@@ -216,33 +216,33 @@ class DynamoDBTable {
     if let tableAws = this.tableAws {
       if let host = aws.Function.from(host) {
         if ops.contains("putItem") {
-          host.addPolicyStatements([aws.PolicyStatement {
+          host.addPolicyStatements(aws.PolicyStatement {
             actions: ["dynamodb:PutItem"],
             resources: [tableAws.table.arn],
             effect: aws.Effect.ALLOW,
-          }]);
+          });
         }
 
         if ops.contains("getItem") {
-          host.addPolicyStatements([aws.PolicyStatement {
+          host.addPolicyStatements(aws.PolicyStatement {
             actions: ["dynamodb:GetItem"],
             resources: [tableAws.table.arn],
             effect: aws.Effect.ALLOW,
-          }]);
+          });
         }
 
         if ops.contains("scan") {
-          host.addPolicyStatements([aws.PolicyStatement {
+          host.addPolicyStatements(aws.PolicyStatement {
             actions: ["dynamodb:Scan"],
             resources: [tableAws.table.arn],
             effect: aws.Effect.ALLOW,
-          }]);
+          });
         }
       }
     }
   }
 
-  inflight getItem(key: Map<Attribute>): Map<Attribute>? {
+  pub inflight getItem(key: Map<Attribute>): Map<Attribute>? {
     assert(key.size() == 1);
     if let tableSim = this.tableSim {
       return tableSim.getItem(key);
@@ -253,7 +253,7 @@ class DynamoDBTable {
     throw("no table instance found for getItem");
   }
 
-  inflight putItem(item: Map<Attribute>) {
+  pub inflight putItem(item: Map<Attribute>) {
     if let tableSim = this.tableSim {
       tableSim.putItem(item);
       return;
@@ -265,7 +265,7 @@ class DynamoDBTable {
     throw("no table instance found for putItem");
   }
 
-  inflight scan(): Array<Map<Attribute>> {
+  pub inflight scan(): Array<Map<Attribute>> {
     if let tableSim = this.tableSim {
       return tableSim.scan();
     }
