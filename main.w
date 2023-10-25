@@ -239,7 +239,6 @@ api.post("/selectWinner", inflight (req) => {
   };
 
   return cloud.ApiResponse {
-    headers: corsHeaders,
     status: 200,
     body: Json.stringify(payload),
   };
