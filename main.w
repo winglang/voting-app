@@ -42,7 +42,7 @@ struct SelectWinnerResponse {
 class Util {
   extern "./util.js" static inflight jsonToSelectWinnerRequest(json: Json): SelectWinnerRequest;
 
-  static inflight clamp(value: num, min: num, max: num): num {
+  pub static inflight clamp(value: num, min: num, max: num): num {
     if value < min {
       return min;
     } elif value > max {
@@ -60,7 +60,7 @@ class Store {
     this.table = new ddb.DynamoDBTable(hashKey: "Name") as "Entries";
   }
 
-  inflight setEntry(entry: Entry) {
+  pub inflight setEntry(entry: Entry) {
     this.table.putItem(_entryToMap(entry));
   }
 
@@ -81,7 +81,7 @@ class Store {
     }
   }
 
-  inflight getRandomPair(): Array<Entry> {
+  pub inflight getRandomPair(): Array<Entry> {
     let entries = this.table.scan();
 
     let firstIdx = math.floor(math.random() * entries.length);
@@ -95,7 +95,7 @@ class Store {
     return [first, second];
   }
 
-  inflight updateScores(winner: str, loser: str): Array<num> {
+  pub inflight updateScores(winner: str, loser: str): Array<num> {
     let entries = this.list();
 
     let winnerEntry = this.getEntry(winner);
@@ -125,7 +125,7 @@ class Store {
     return [winnerNewScore, loserNewScore];
   }
 
-  inflight list(): Array<Entry> {
+  pub inflight list(): Array<Entry> {
     let items = this.table.scan();
     let entries = MutArray<Entry>[];
     for item in items {
@@ -191,16 +191,10 @@ new cloud.OnDeploy(inflight () => {
   }
 }) as "InitializeTable";
 
-let api = new cloud.Api() as "VotingAppApi";
+let api = new cloud.Api(cors: true) as "VotingAppApi";
 
 let website = new cloud.Website(path: "./website/build");
 website.addJson("config.json", { apiUrl: api.url });
-
-let corsHeaders = {
-  "Access-Control-Allow-Headers" => "*",
-  "Access-Control-Allow-Origin" => "*",
-  "Access-Control-Allow-Methods" =>  "OPTIONS,GET",
-};
 
 // Select two random items from the list of items for the user to choose between
 api.post("/requestChoices", inflight (_) => {
@@ -210,7 +204,6 @@ api.post("/requestChoices", inflight (_) => {
     entryNames.push(entry.name);
   }
   return cloud.ApiResponse {
-    headers: corsHeaders,
     status: 200,
     body: Json.stringify(entryNames),
   };
@@ -220,7 +213,6 @@ api.post("/requestChoices", inflight (_) => {
 api.get("/leaderboard", inflight (_) => {
   let entries = store.list();
   return cloud.ApiResponse {
-    headers: corsHeaders,
     status: 200,
     body: Json.stringify(entries),
   };
@@ -237,7 +229,6 @@ api.post("/selectWinner", inflight (req) => {
      newScores = store.updateScores(selections.winner, selections.loser);
   } catch e {
     return cloud.ApiResponse {
-      headers: corsHeaders,
       status: 400,
       body: "Error: " + Json.stringify(e),
     };
@@ -248,7 +239,6 @@ api.post("/selectWinner", inflight (req) => {
   };
 
   return cloud.ApiResponse {
-    headers: corsHeaders,
     status: 200,
     body: Json.stringify(payload),
   };
