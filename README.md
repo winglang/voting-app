@@ -1,6 +1,6 @@
 # Battle of the Bites!
 
-***Get ready to indulge your taste buds and crown the ultimate culinary champion in Battle of the Bites!*** 🍔🍕🍣
+**_Get ready to indulge your taste buds and crown the ultimate culinary champion in Battle of the Bites!_** 🍔🍕🍣
 Swipe, vote, and savor the showdown as iconic dishes from around the world go head-to-head in a gastronomic clash like no other.
 Will pizza outflavor sushi?
 Can burgers grill their way to victory over tacos?
@@ -19,6 +19,7 @@ Inspired by https://eloeverything.co/.
 
 To deploy your own copy of the app, first make sure you have AWS credentials configured in your terminal for the account and region you want to deploy to.
 Then:
+
 1. Clone this git repository.
 2. Compile the project to AWS (with Terraform) using `wing compile -t tf-aws main.w`.
 3. Run `cd target/main.tfaws` to find your deployment artifacts.
@@ -29,11 +30,12 @@ Then:
 1. Clone this git repository.
 2. Run `cd website`.
 3. Run `npm install`.
-4. Create a file at `website/public/config.json` that contains the following:
+4. Run `npm run build`,
+5. Create a file at `website/public/config.json` that contains the following:
 
 ```json
 {
-    "apiUrl": "<API GATEWAY URL>",
+  "apiUrl": "<API GATEWAY URL>"
 }
 ```
 

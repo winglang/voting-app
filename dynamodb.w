@@ -33,7 +33,7 @@ pub class DynamoDBTableSim {
   key: str;
   data: cloud.Bucket;
 
-  init(props: DynamoDBTableProps) {
+ new(props: DynamoDBTableProps) {
     this.key = "data.json";
     this.data = new cloud.Bucket();
     this.data.addObject(this.key, "[]");
@@ -76,7 +76,7 @@ pub class DynamoDBTableAws {
   pub table: tfaws.dynamodbTable.DynamodbTable;
   tableName: str;
   hashKey: str;
-  init(props: DynamoDBTableProps) {
+  new (props: DynamoDBTableProps) {
     this.hashKey = props.hashKey;
     this.table = new tfaws.dynamodbTable.DynamodbTable(
       name: "${this.node.id}-${this.node.addr.substring(this.node.addr.length - 8)}",
@@ -171,7 +171,7 @@ pub class DynamoDBTable {
   tableSim: DynamoDBTableSim?;
   tableAws: DynamoDBTableAws?;
 
-  init(props: DynamoDBTableProps) {
+  new (props: DynamoDBTableProps) {
     let target = util.env("WING_TARGET");
     if target == "sim" {
       this.tableSim = new DynamoDBTableSim(props);
