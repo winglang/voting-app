@@ -35,7 +35,7 @@ Then:
 
 ```json
 {
-  "apiUrl": "<API GATEWAY URL>"
+  "apiUrl": "<API GATEWAY URL>",
 }
 ```
 
