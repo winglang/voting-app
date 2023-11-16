@@ -56,7 +56,7 @@ class Util {
 
 class Store {
   table: ddb.DynamoDBTable;
-  init() {
+  new() {
     this.table = new ddb.DynamoDBTable(hashKey: "Name") as "Entries";
   }
 
