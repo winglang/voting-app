@@ -17,7 +17,7 @@ let _entryToMap = inflight (entry: Entry) => {
     },
     "Score" => ddb.Attribute {
       type: ddb.AttributeType.Number,
-      value: "${entry.score}",
+      value: "{entry.score}",
     },
   };
 };
