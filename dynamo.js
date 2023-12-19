@@ -1,6 +1,8 @@
 const { DynamoDBClient, GetItemCommand, PutItemCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
 
-const client = new DynamoDBClient({});
+const client = new DynamoDBClient({endpoint: process.env.AWS_ENDPOINT_URL_DYNAMODB});
+
+
 
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/dynamodb/command/PutItemCommand/
 export async function _putItem(tableName, item) {
