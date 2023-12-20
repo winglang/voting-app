@@ -183,7 +183,6 @@ pub class DynamoDBTable {
   }
 
   pub onLift(host: std.IInflightHost, ops: Array<str>) {
-    log("onLift called on DynamoDBTable with ops {ops}");
     // currently simulator does not require permissions
     // may change with https://github.com/winglang/wing/issues/3082
     if let tableAws = this.tableAws {
