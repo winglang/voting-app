@@ -79,7 +79,7 @@ pub class DynamoDBTableAws {
   new(props: DynamoDBTableProps) {
     this.hashKey = props.hashKey;
     this.table = new tfaws.dynamodbTable.DynamodbTable(
-      name: "${this.node.id}-${this.node.addr.substring(this.node.addr.length - 8)}",
+      name: "{this.node.id}-{this.node.addr.substring(this.node.addr.length - 8)}",
       billingMode: "PAY_PER_REQUEST",
       hashKey: this.hashKey,
       attribute: [
@@ -178,12 +178,11 @@ pub class DynamoDBTable {
     } elif target == "tf-aws" {
       this.tableAws = new DynamoDBTableAws(props);
     } else {
-      throw("DynamoDBTable doesn't support target '${target}'");
+      throw("DynamoDBTable doesn't support target '{target}'");
     }
   }
 
   pub onLift(host: std.IInflightHost, ops: Array<str>) {
-    log("onLift called on DynamoDBTable with ops ${ops}");
     // currently simulator does not require permissions
     // may change with https://github.com/winglang/wing/issues/3082
     if let tableAws = this.tableAws {

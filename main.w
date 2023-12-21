@@ -17,7 +17,7 @@ let _entryToMap = inflight (entry: Entry) => {
     },
     "Score" => ddb.Attribute {
       type: ddb.AttributeType.Number,
-      value: "${entry.score}",
+      value: "{entry.score}",
     },
   };
 };
@@ -64,7 +64,7 @@ class Store {
     this.table.putItem(_entryToMap(entry));
   }
 
-  inflight getEntry(name: str): Entry? {
+  pub inflight getEntry(name: str): Entry? {
     let item = this.table.getItem(Map<ddb.Attribute> {
       "Name" => ddb.Attribute {
         type: ddb.AttributeType.String,
@@ -184,6 +184,9 @@ let foods = [
 
 new cloud.OnDeploy(inflight () => {
   for food in foods {
+    if !store.getEntry(food)? {
+      continue;
+    }
     store.setEntry(Entry {
       name: food,
       score: 1500,
