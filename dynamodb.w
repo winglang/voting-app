@@ -101,10 +101,13 @@ pub class DynamoDBTableAws {
     DynamoDBTableAws._putItem(this.tableName, json);
   }
 
-  pub inflight getItem(key: Map<Attribute>): Map<Attribute> {
+  pub inflight getItem(key: Map<Attribute>): Map<Attribute>? {
     let json = this._itemToJson(key);
     let result = DynamoDBTableAws._getItem(this.tableName, json);
-    return this._rawMapToItem((result ?? {}).get("Item"));
+    if let res = result {
+      return this._rawMapToItem(res.get("Item"));
+    }
+    return nil;
   }
 
   pub inflight scan(): Array<Map<Attribute>> {
