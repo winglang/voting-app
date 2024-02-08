@@ -93,7 +93,7 @@ pub class DynamoDBTableAws {
   }
 
   extern "./dynamo.js" static inflight _putItem(tableName: str, item: Json): void;
-  extern "./dynamo.js" static inflight _getItem(tableName: str, key: Json): Map<Map<Map<str>>>;
+  extern "./dynamo.js" static inflight _getItem(tableName: str, key: Json): Map<Map<Map<str>>>?;
   extern "./dynamo.js" static inflight _scan(tableName: str): Map<Array<Map<Map<str>>>>;
 
   pub inflight putItem(item: Map<Attribute>) {
@@ -104,7 +104,7 @@ pub class DynamoDBTableAws {
   pub inflight getItem(key: Map<Attribute>): Map<Attribute> {
     let json = this._itemToJson(key);
     let result = DynamoDBTableAws._getItem(this.tableName, json);
-    return this._rawMapToItem(result.get("Item"));
+    return this._rawMapToItem(result?.get("Item") ?? {});
   }
 
   pub inflight scan(): Array<Map<Attribute>> {
