@@ -168,8 +168,11 @@ pub class DynamoDBTableAws {
 }
 
 pub class DynamoDBTable {
-  tableSim: DynamoDBTableSim?;
-  tableAws: DynamoDBTableAws?;
+  // TODO: these fields are actually optional. workaround for:
+  // https://github.com/winglang/wing/issues/5636
+  // https://github.com/winglang/wing/issues/5647
+  tableSim: DynamoDBTableSim;
+  tableAws: DynamoDBTableAws;
 
   new(props: DynamoDBTableProps) {
     let target = util.env("WING_TARGET");
@@ -185,12 +188,12 @@ pub class DynamoDBTable {
   pub onLift(host: std.IInflightHost, ops: Array<str>) {
     // currently simulator does not require permissions
     // may change with https://github.com/winglang/wing/issues/3082
-    if let tableAws = this.tableAws {
+    if let tableAws = unsafeCast(this.tableAws) {
       if let host = aws.Function.from(host) {
         if ops.contains("putItem") {
           host.addPolicyStatements(aws.PolicyStatement {
             actions: ["dynamodb:PutItem"],
-            resources: [tableAws.table.arn],
+            resources: [tableAws?.table?.arn],
             effect: aws.Effect.ALLOW,
           });
         }
@@ -198,7 +201,7 @@ pub class DynamoDBTable {
         if ops.contains("getItem") {
           host.addPolicyStatements(aws.PolicyStatement {
             actions: ["dynamodb:GetItem"],
-            resources: [tableAws.table.arn],
+            resources: [tableAws?.table?.arn],
             effect: aws.Effect.ALLOW,
           });
         }
@@ -206,7 +209,7 @@ pub class DynamoDBTable {
         if ops.contains("scan") {
           host.addPolicyStatements(aws.PolicyStatement {
             actions: ["dynamodb:Scan"],
-            resources: [tableAws.table.arn],
+            resources: [tableAws?.table?.arn],
             effect: aws.Effect.ALLOW,
           });
         }
@@ -216,34 +219,29 @@ pub class DynamoDBTable {
 
   pub inflight getItem(key: Map<Attribute>): Map<Attribute>? {
     assert(key.size() == 1);
-    if let tableSim = this.tableSim {
-      return tableSim.getItem(key);
+    let isSim = unsafeCast(this.tableSim) != nil;
+    if isSim {
+      return this.tableSim.getItem(key);
+    } else {
+      return this.tableAws.getItem(key);
     }
-    if let tableAws = this.tableAws {
-      return tableAws.getItem(key);
-    }
-    throw("no table instance found for getItem");
   }
 
   pub inflight putItem(item: Map<Attribute>) {
-    if let tableSim = this.tableSim {
-      tableSim.putItem(item);
-      return;
+    let isSim = unsafeCast(this.tableSim) != nil;
+    if isSim {
+      this.tableSim.putItem(item);
+    } else {
+      this.tableAws.putItem(item);
     }
-    if let tableAws = this.tableAws {
-      tableAws.putItem(item);
-      return;
-    }
-    throw("no table instance found for putItem");
   }
 
   pub inflight scan(): Array<Map<Attribute>> {
-    if let tableSim = this.tableSim {
-      return tableSim.scan();
+    let isSim = unsafeCast(this.tableSim) != nil;
+    if isSim {
+      return this.tableSim.scan();
+    } else {
+      return this.tableAws.scan();
     }
-    if let tableAws = this.tableAws {
-      return tableAws.scan();
-    }
-    throw("no table instance found for scan");
   }
 }

@@ -185,12 +185,11 @@ let foods = [
 new cloud.OnDeploy(inflight () => {
   for food in foods {
     if !store.getEntry(food)? {
-      continue;
+      store.setEntry(Entry {
+        name: food,
+        score: 1500,
+      });
     }
-    store.setEntry(Entry {
-      name: food,
-      score: 1500,
-    });
   }
 }) as "InitializeTable";
 
