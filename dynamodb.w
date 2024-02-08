@@ -168,8 +168,11 @@ pub class DynamoDBTableAws {
 }
 
 pub class DynamoDBTable {
-  tableSim: DynamoDBTableSim; // TODO: this is actually optional
-  tableAws: DynamoDBTableAws; // TODO: this is actually optional
+  // TODO: these fields are actually optional. workaround for:
+  // https://github.com/winglang/wing/issues/5636
+  // https://github.com/winglang/wing/issues/5647
+  tableSim: DynamoDBTableSim;
+  tableAws: DynamoDBTableAws;
 
   new(props: DynamoDBTableProps) {
     let target = util.env("WING_TARGET");
