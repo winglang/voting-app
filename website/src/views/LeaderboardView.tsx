@@ -60,7 +60,7 @@ export const LeaderboardView = () => {
                       {index === 1 && "🥈"}
                       {index === 2 && "🥉"}
                     </div>
-                    <div>{Math.max(item.score, 0)}</div>
+                    <div>{Math.max(Math.round(item.score ?? 0), 0)}</div>
                   </div>
                 </td>
               </tr>
