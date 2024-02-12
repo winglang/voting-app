@@ -1,4 +1,3 @@
-import { Button } from "./Button";
 import classnames from "classnames";
 import { SpinnerLoader } from "./SpinnerLoader";
 import { useMemo } from "react";
@@ -33,11 +32,16 @@ export const VoteItem = ({
   const isWinner = winner === name ? -1 : 1;
 
   return (
-    <div className="text-center">
+    // separate div to avoid being overwritten by `rotateStyle`
+    <div className={classnames("transition-transform hover:scale-110")}>
+
       <div
+        onClick={() => !disabled && winner === undefined && onClick()}
         className={classnames(
           "rounded-lg bg-white",
-          "transition-transform duration-300 w-full h-full transform"
+          "text-center transition-transform duration-300 w-full h-full transform",
+          loading && "cursor-wait",
+          !loading && winner === undefined &&  "cursor-pointer",
         )}
         style={rotateStyle}
       >
@@ -66,9 +70,9 @@ export const VoteItem = ({
             >
               <style>
                 {`#${safeName}::after {
-  content: counter(${safeName});
-  animation: ${safeName}-anim 1.5s linear;
-  counter-reset: ${safeName} ${score};
+content: counter(${safeName});
+animation: ${safeName}-anim 1.5s linear;
+counter-reset: ${safeName} ${score};
 }
 
 @keyframes ${safeName}-anim {
@@ -79,15 +83,15 @@ export const VoteItem = ({
   12% { counter-reset: ${safeName} ${safeScore + 11 * isWinner}; }
   15% { counter-reset: ${safeName} ${safeScore + 10 * isWinner}; }
   18% { counter-reset: ${safeName} ${safeScore + 9 * isWinner}; }
-  21% { counter-reset: ${safeName} ${safeScore + 8 * isWinner}; }
-  24% { counter-reset: ${safeName} ${safeScore + 7 * isWinner}; }
-  27% { counter-reset: ${safeName} ${safeScore + 6 * isWinner}; }
-  30% { counter-reset: ${safeName} ${safeScore + 5 * isWinner}; }
-  33% { counter-reset: ${safeName} ${safeScore + 4 * isWinner}; }
-  36% { counter-reset: ${safeName} ${safeScore + 3 * isWinner}; }
-  43% { counter-reset: ${safeName} ${safeScore + 2 * isWinner}; }
-  66% { counter-reset: ${safeName} ${safeScore + 1 * isWinner}; }
-  100% { counter-reset: ${safeName} ${safeScore}; }
+21% { counter-reset: ${safeName} ${safeScore + 8 * isWinner}; }
+24% { counter-reset: ${safeName} ${safeScore + 7 * isWinner}; }
+27% { counter-reset: ${safeName} ${safeScore + 6 * isWinner}; }
+30% { counter-reset: ${safeName} ${safeScore + 5 * isWinner}; }
+33% { counter-reset: ${safeName} ${safeScore + 4 * isWinner}; }
+36% { counter-reset: ${safeName} ${safeScore + 3 * isWinner}; }
+43% { counter-reset: ${safeName} ${safeScore + 2 * isWinner}; }
+66% { counter-reset: ${safeName} ${safeScore + 1 * isWinner}; }
+100% { counter-reset: ${safeName} ${safeScore}; }
 }`}
               </style>
               Score: <span id={safeName}></span>
@@ -102,15 +106,6 @@ export const VoteItem = ({
             />
           )}
         </div>
-      </div>
-
-      <div className="pt-6">
-        <Button
-          onClick={onClick}
-          label="Vote"
-          loading={loading}
-          disabled={disabled || winner !== undefined}
-        />
       </div>
     </div>
   );

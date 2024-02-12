@@ -1,6 +1,21 @@
 {
+  "scripts": {
+    "build-react": "npm run --prefix website build",
+    "watch-react": "npm-watch"
+  },
+  "watch": {
+    "build-react": {
+      "patterns": [
+        "website/src"
+      ],
+      "extensions": "ts,tsx,css"
+    }
+  },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.369.0",
     "@cdktf/provider-aws": "^19.4.0"
+  },
+  "devDependencies": {
+    "npm-watch": "^0.11.0"
   }
 }

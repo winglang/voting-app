@@ -1,47 +1,37 @@
 # Battle of the Bites!
 
 **_Get ready to indulge your taste buds and crown the ultimate culinary champion in Battle of the Bites!_** 🍔🍕🍣
-Swipe, vote, and savor the showdown as iconic dishes from around the world go head-to-head in a gastronomic clash like no other.
-Will pizza outflavor sushi?
-Can burgers grill their way to victory over tacos?
-Join the epic feast and help your favorite bites seize their rightful spot on the podium of delicious dominance.
-Welcome to the ultimate flavor face-off!
+Vote on different matchups as iconic dishes from around the world go head-to-head.
 
-Check out the app's demo at https://d150bm8l5c4qqp.cloudfront.net/.
+<center>
+<b><a href="https://d1uu5g7pkrzn0o.cloudfront.net/">Live Demo</a></b>
+</center>
+<br>
 
-![Battle of the Bites screenshot](screenshot.png)
+[![Battle of the Bites screenshot](screenshot.png)](https://d1uu5g7pkrzn0o.cloudfront.net/)
 
 Inspired by https://eloeverything.co/.
 
 ## Development
 
+### Testing
+
+You can test the web app locally using Wing Console.
+
+1. Run `npm run build-react` to build the website.
+2. Run `wing it main.w` to launch the Wing Console in your browser.
+3. In the Wing Console, locate the website resource, and click on it to see its properties on the right sidebar. Click on the URL property to open visit the website in your browser.
+
 ### Deployment
 
 To deploy your own copy of the app, first make sure you have AWS credentials configured in your terminal for the account and region you want to deploy to.
-Then:
+Then run the following commands to compile the app into Terraform, and deploy it:
 
-1. Clone this git repository.
-2. Compile the project to AWS (with Terraform) using `wing compile -t tf-aws main.w`.
-3. Run `cd target/main.tfaws` to find your deployment artifacts.
-4. Run `terraform init` and `terraform apply`.
-
-### Website
-
-1. Clone this git repository.
-2. Run `cd website`.
-3. Run `npm install`.
-4. Run `npm run build`,
-5. Create a file at `website/public/config.json` that contains the following:
-
-```json
-{
-  "apiUrl": "<API GATEWAY URL>",
-}
 ```
-
-Replace <API GATEWAY URL> with the URL of the API Gateway that was created when you deployed the app.
-
-5. Run `npm run start` from `website` to start the development server. Any changes you make to the website will be automatically reflected in the browser.
+wing compile -t tf-aws main.w
+terraform -chdir=./target/main.tfaws init
+terraform -chdir=./target/main.tfaws apply
+```
 
 ## Contributions
 
