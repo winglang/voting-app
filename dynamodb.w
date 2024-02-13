@@ -22,6 +22,12 @@ pub class Util {
   extern "./util.js" pub static inflight mutArrayToJson(json: MutArray<Map<Attribute>>): Json;
 }
 
+interface IDynamoDBTable {
+  inflight getItem(map: Map<Attribute>): Map<Attribute>?;
+  inflight putItem(item: Map<Attribute>): void;
+  inflight scan(): Array<Map<Attribute>>;
+}
+
 // TODO: https://github.com/winglang/wing/issues/3350
 // typealias Item = Map<Attribute>;
 
@@ -29,7 +35,7 @@ struct DynamoDBTableProps {
   hashKey: str;
 }
 
-pub class DynamoDBTableSim {
+pub class DynamoDBTableSim impl IDynamoDBTable {
   key: str;
   data: cloud.Bucket;
 
@@ -70,9 +76,13 @@ pub class DynamoDBTableSim {
     let items = this.data.getJson(this.key);
     return Util.jsonToArray(items);
   }
+
+  pub onLift(host: std.IInflightHost, ops: Array<str>) {
+    // Wing simulator does not currently have permissions, see https://github.com/winglang/wing/issues/3082
+  }
 }
 
-pub class DynamoDBTableAws {
+pub class DynamoDBTableAws impl IDynamoDBTable {
   pub table: tfaws.dynamodbTable.DynamodbTable;
   tableName: str;
   hashKey: str;
@@ -168,83 +178,60 @@ pub class DynamoDBTableAws {
       return AttributeType.Binary;
     }
   }
+
+  pub onLift(host: std.IInflightHost, ops: Array<str>) {
+    if let host = aws.Function.from(host) {
+      if ops.contains("putItem") {
+        host.addPolicyStatements(aws.PolicyStatement {
+          actions: ["dynamodb:PutItem"],
+          resources: [this.table.arn],
+          effect: aws.Effect.ALLOW,
+        });
+      }
+
+      if ops.contains("getItem") {
+        host.addPolicyStatements(aws.PolicyStatement {
+          actions: ["dynamodb:GetItem"],
+          resources: [this.table.arn],
+          effect: aws.Effect.ALLOW,
+        });
+      }
+
+      if ops.contains("scan") {
+        host.addPolicyStatements(aws.PolicyStatement {
+          actions: ["dynamodb:Scan"],
+          resources: [this.table.arn],
+          effect: aws.Effect.ALLOW,
+        });
+      }
+    }
+  }
 }
 
 pub class DynamoDBTable {
-  // TODO: these fields are actually optional. workaround for:
-  // https://github.com/winglang/wing/issues/5636
-  // https://github.com/winglang/wing/issues/5647
-  tableSim: DynamoDBTableSim;
-  tableAws: DynamoDBTableAws;
+  rawTable: IDynamoDBTable;
 
   new(props: DynamoDBTableProps) {
     let target = util.env("WING_TARGET");
     if target == "sim" {
-      this.tableSim = new DynamoDBTableSim(props);
+      this.rawTable = new DynamoDBTableSim(props);
     } elif target == "tf-aws" {
-      this.tableAws = new DynamoDBTableAws(props);
+      this.rawTable = new DynamoDBTableAws(props);
     } else {
       throw("DynamoDBTable doesn't support target '{target}'");
     }
   }
 
-  pub onLift(host: std.IInflightHost, ops: Array<str>) {
-    // currently simulator does not require permissions
-    // may change with https://github.com/winglang/wing/issues/3082
-    if let tableAws = unsafeCast(this.tableAws) {
-      if let host = aws.Function.from(host) {
-        if ops.contains("putItem") {
-          host.addPolicyStatements(aws.PolicyStatement {
-            actions: ["dynamodb:PutItem"],
-            resources: [tableAws?.table?.arn],
-            effect: aws.Effect.ALLOW,
-          });
-        }
-
-        if ops.contains("getItem") {
-          host.addPolicyStatements(aws.PolicyStatement {
-            actions: ["dynamodb:GetItem"],
-            resources: [tableAws?.table?.arn],
-            effect: aws.Effect.ALLOW,
-          });
-        }
-
-        if ops.contains("scan") {
-          host.addPolicyStatements(aws.PolicyStatement {
-            actions: ["dynamodb:Scan"],
-            resources: [tableAws?.table?.arn],
-            effect: aws.Effect.ALLOW,
-          });
-        }
-      }
-    }
-  }
-
   pub inflight getItem(key: Map<Attribute>): Map<Attribute>? {
     assert(key.size() == 1);
-    let isSim = unsafeCast(this.tableSim) != nil;
-    if isSim {
-      return this.tableSim.getItem(key);
-    } else {
-      return this.tableAws.getItem(key);
-    }
+    return this.rawTable.getItem(key);
   }
 
   pub inflight putItem(item: Map<Attribute>) {
-    let isSim = unsafeCast(this.tableSim) != nil;
-    if isSim {
-      this.tableSim.putItem(item);
-    } else {
-      this.tableAws.putItem(item);
-    }
+    this.rawTable.putItem(item);
   }
 
   pub inflight scan(): Array<Map<Attribute>> {
-    let isSim = unsafeCast(this.tableSim) != nil;
-    if isSim {
-      return this.tableSim.scan();
-    } else {
-      return this.tableAws.scan();
-    }
+    return this.rawTable.scan();
   }
 }
