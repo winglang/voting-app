@@ -1,17 +1,8 @@
-import { useEffect, useState } from "react";
-import { Entry, fetchLeaderboard } from "../services/fetchLeaderboard";
+import { useFetchLeaderboard } from "../services/fetchLeaderboard";
 import { SpinnerLoader } from "../components/SpinnerLoader";
 
 export const LeaderboardView = () => {
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchLeaderboard().then((items) => {
-      setEntries(items);
-      setLoading(false);
-    });
-  }, []);
+  const { entries, isLoading } = useFetchLeaderboard();
 
   return (
     <div className="max-h-[22rem] overflow-y-auto h-full">
@@ -33,7 +24,7 @@ export const LeaderboardView = () => {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-400">
-          {loading && (
+          {isLoading && (
             <tr>
               <td
                 colSpan={2}

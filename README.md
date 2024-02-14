@@ -22,6 +22,9 @@ You can test the web app locally using Wing Console.
 2. Run `wing it main.w` to launch the Wing Console in your browser.
 3. In the Wing Console, locate the website resource, and click on it to see its properties on the right sidebar. Click on the URL property to open visit the website in your browser.
 
+For working on the React app, you can `cd` into the `website` directory and run `npm run start` to start the React app, which will automatically connect to the Wing simulator if you have the Wing Console running.
+The page will automatically reload if you make changes to the React code.
+
 ### Deployment
 
 To deploy your own copy of the app, first make sure you have AWS credentials configured in your terminal for the account and region you want to deploy to.

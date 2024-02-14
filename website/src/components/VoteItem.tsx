@@ -76,21 +76,24 @@ counter-reset: ${safeName} ${score};
 }
 
 @keyframes ${safeName}-anim {
-  0% { counter-reset: ${safeName} ${safeScore + 15 * isWinner}; }
-  3% { counter-reset: ${safeName} ${safeScore + 14 * isWinner}; }
-  6% { counter-reset: ${safeName} ${safeScore + 13 * isWinner}; }
-  9% { counter-reset: ${safeName} ${safeScore + 12 * isWinner}; }
-  12% { counter-reset: ${safeName} ${safeScore + 11 * isWinner}; }
-  15% { counter-reset: ${safeName} ${safeScore + 10 * isWinner}; }
-  18% { counter-reset: ${safeName} ${safeScore + 9 * isWinner}; }
-21% { counter-reset: ${safeName} ${safeScore + 8 * isWinner}; }
-24% { counter-reset: ${safeName} ${safeScore + 7 * isWinner}; }
-27% { counter-reset: ${safeName} ${safeScore + 6 * isWinner}; }
-30% { counter-reset: ${safeName} ${safeScore + 5 * isWinner}; }
-33% { counter-reset: ${safeName} ${safeScore + 4 * isWinner}; }
-36% { counter-reset: ${safeName} ${safeScore + 3 * isWinner}; }
-43% { counter-reset: ${safeName} ${safeScore + 2 * isWinner}; }
-66% { counter-reset: ${safeName} ${safeScore + 1 * isWinner}; }
+0% { counter-reset: ${safeName} ${safeScore + 18 * isWinner}; }
+3% { counter-reset: ${safeName} ${safeScore + 17 * isWinner}; }
+6% { counter-reset: ${safeName} ${safeScore + 16 * isWinner}; }
+9% { counter-reset: ${safeName} ${safeScore + 15 * isWinner}; }
+12% { counter-reset: ${safeName} ${safeScore + 14 * isWinner}; }
+15% { counter-reset: ${safeName} ${safeScore + 13 * isWinner}; }
+18% { counter-reset: ${safeName} ${safeScore + 12 * isWinner}; }
+21% { counter-reset: ${safeName} ${safeScore + 11 * isWinner}; }
+24% { counter-reset: ${safeName} ${safeScore + 10 * isWinner}; }
+27% { counter-reset: ${safeName} ${safeScore + 9 * isWinner}; }
+30% { counter-reset: ${safeName} ${safeScore + 8 * isWinner}; }
+33% { counter-reset: ${safeName} ${safeScore + 7 * isWinner}; }
+36% { counter-reset: ${safeName} ${safeScore + 6 * isWinner}; }
+39% { counter-reset: ${safeName} ${safeScore + 5 * isWinner}; }
+42% { counter-reset: ${safeName} ${safeScore + 4 * isWinner}; }
+50% { counter-reset: ${safeName} ${safeScore + 3 * isWinner}; }
+60% { counter-reset: ${safeName} ${safeScore + 2 * isWinner}; }
+80% { counter-reset: ${safeName} ${safeScore + 1 * isWinner}; }
 100% { counter-reset: ${safeName} ${safeScore}; }
 }`}
               </style>

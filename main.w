@@ -1,6 +1,8 @@
 bring "./dynamodb.w" as ddb;
 bring cloud;
+bring fs;
 bring math;
+bring util;
 
 // --- types ---
 
@@ -40,8 +42,6 @@ struct SelectWinnerResponse {
 }
 
 class Util {
-  extern "./util.js" static inflight jsonToSelectWinnerRequest(json: Json): SelectWinnerRequest;
-
   pub static inflight clamp(value: num, min: num, max: num): num {
     if value < min {
       return min;
@@ -116,8 +116,8 @@ class Store {
     // probability that the winner should have won
     let pWinner = 1.0 / (1.0 + 10 ** ((loserScore - winnerScore) / 400.0));
 
-    let winnerNewScore = Util.clamp(winnerScore + 32 * (1.0 - pWinner), 1000, 2000);
-    let loserNewScore = Util.clamp(loserScore + 32 * (pWinner - 1.0), 1000, 2000);
+    let winnerNewScore = Util.clamp(winnerScore + 32 * (1.0 - pWinner), 0, 2000);
+    let loserNewScore = Util.clamp(loserScore + 32 * (pWinner - 1.0), 0, 2000);
 
     this.setEntry(Entry { name: winner, score: winnerNewScore });
     this.setEntry(Entry { name: loser, score: loserNewScore });
@@ -187,7 +187,7 @@ new cloud.OnDeploy(inflight () => {
     if !store.getEntry(food)? {
       store.setEntry(Entry {
         name: food,
-        score: 1500,
+        score: 1000 + math.floor(math.random() * 100) - 50, // 1000 +/- 50
       });
     }
   }
@@ -197,6 +197,14 @@ let api = new cloud.Api(cors: true) as "VotingAppApi";
 
 let website = new cloud.Website(path: "./website/build");
 website.addJson("config.json", { apiUrl: api.url });
+
+// A hack to expose the api url to the React app for local development
+if util.env("WING_TARGET") == "sim" {
+  new cloud.OnDeploy(inflight () => {
+    fs.writeFile("node_modules/.votingappenv", api.url);
+  }) as "ReactAppSetup";
+}
+
 
 // Select two random items from the list of items for the user to choose between
 api.post("/requestChoices", inflight (_) => {

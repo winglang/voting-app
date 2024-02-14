@@ -16,12 +16,6 @@ pub struct Attribute {
   value: Json;
 }
 
-pub class Util {
-  extern "./util.js" pub static inflight jsonToMutArray(json: Json): MutArray<Map<Attribute>>;
-  extern "./util.js" pub static inflight jsonToArray(json: Json): Array<Map<Attribute>>;
-  extern "./util.js" pub static inflight mutArrayToJson(json: MutArray<Map<Attribute>>): Json;
-}
-
 interface IDynamoDBTable {
   inflight getItem(map: Map<Attribute>): Map<Attribute>?;
   inflight putItem(item: Map<Attribute>): void;
@@ -38,23 +32,44 @@ struct DynamoDBTableProps {
 pub class DynamoDBTableSim impl IDynamoDBTable {
   key: str;
   data: cloud.Bucket;
+  hashKey: str;
 
  new(props: DynamoDBTableProps) {
     this.key = "data.json";
     this.data = new cloud.Bucket();
     this.data.addObject(this.key, "[]");
+    this.hashKey = props.hashKey;
   }
 
   pub inflight putItem(item: Map<Attribute>) {
-    let items = this.data.getJson(this.key);
-    let itemsMut = Util.jsonToMutArray(items);
-    itemsMut.push(item);
-    this.data.putJson(this.key, Util.mutArrayToJson(itemsMut));
+    // Check if the item has the hash key
+    if !item.has(this.hashKey) {
+      throw("Item does not have the hash key");
+    }
+
+    let items: Json = this.data.getJson(this.key);
+    let itemsMut: MutArray<MutMap<Attribute>> = unsafeCast(items);
+
+    // Check if the item already exists by looking in the array for an item with the same hash key
+    for existingItem in itemsMut {
+      if existingItem.get(this.hashKey).value == item.get(this.hashKey).value {
+        // If it does, update the item
+        for key in item.keys() {
+          existingItem.set(key, item.get(key));
+        }
+        this.data.putJson(this.key, unsafeCast(itemsMut));
+        return;
+      }
+    }
+
+    // If the item doesn't exist, add it to the array
+    itemsMut.push(item.copyMut());
+    this.data.putJson(this.key, unsafeCast(itemsMut));
   }
 
   pub inflight getItem(map: Map<Attribute>): Map<Attribute>? {
-    let items = this.data.getJson(this.key);
-    let itemsMut = Util.jsonToMutArray(items);
+    let items: Json = this.data.getJson(this.key);
+    let itemsMut: MutArray<Map<Attribute>> = unsafeCast(items);
     for item in itemsMut {
       let var matches = true;
       for key in map.keys() {
@@ -73,8 +88,8 @@ pub class DynamoDBTableSim impl IDynamoDBTable {
   }
 
   pub inflight scan(): Array<Map<Attribute>> {
-    let items = this.data.getJson(this.key);
-    return Util.jsonToArray(items);
+    let items: Json = this.data.getJson(this.key);
+    return unsafeCast(items);
   }
 
   pub onLift(host: std.IInflightHost, ops: Array<str>) {
