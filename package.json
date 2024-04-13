@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.369.0",
-    "@cdktf/provider-aws": "^19.4.0"
+    "@cdktf/provider-aws": "^19.4.0",
+    "@winglibs/dynamodb": "^0.1.6"
   },
   "devDependencies": {
     "npm-watch": "^0.11.0"

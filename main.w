@@ -1,5 +1,5 @@
-bring "./dynamodb.w" as ddb;
 bring cloud;
+bring dynamodb;
 bring fs;
 bring math;
 bring util;
@@ -10,26 +10,6 @@ struct Entry {
   name: str;
   score: num;
 }
-
-let _entryToMap = inflight (entry: Entry) => {
-  return Map<ddb.Attribute> {
-    "Name" => ddb.Attribute {
-      type: ddb.AttributeType.String,
-      value: entry.name,
-    },
-    "Score" => ddb.Attribute {
-      type: ddb.AttributeType.Number,
-      value: "{entry.score}",
-    },
-  };
-};
-
-let _mapToEntry = inflight (map: Map<ddb.Attribute>): Entry => {
-  return Entry {
-    name: str.fromJson(map.get("Name").value),
-    score: num.fromStr(str.fromJson(map.get("Score").value)),
-  };
-};
 
 struct SelectWinnerRequest {
   winner: str;
@@ -55,26 +35,34 @@ class Util {
 // --- application ---
 
 class Store {
-  table: ddb.DynamoDBTable;
+  table: dynamodb.Table;
   new() {
-    this.table = new ddb.DynamoDBTable(hashKey: "Name") as "Entries";
+    this.table = new dynamodb.Table(
+      attributes: [
+        { name: "Name", type: "S" },
+        // { name: "Score", type: "N" },
+      ],
+      hashKey: "Name",
+    ) as "EntiresTable";
   }
 
   pub inflight setEntry(entry: Entry) {
-    this.table.putItem(_entryToMap(entry));
+    this.table.put({
+      Item: {
+        "Name": entry.name,
+        "Score": entry.score,
+      }
+    });
   }
 
   pub inflight getEntry(name: str): Entry? {
-    let item = this.table.getItem(Map<ddb.Attribute> {
-      "Name" => ddb.Attribute {
-        type: ddb.AttributeType.String,
-        value: name,
-      },
+    let result = this.table.get({
+      Key: { "Name": name },
     });
-    if let item = item {
+    if let item = result.Item {
       return Entry {
         name: name,
-        score: num.fromStr(str.fromJson(item.get("Score").value)),
+        score: num.fromStr(item.get("Score").get("value").asStr()),
       };
     } else {
       return nil;
@@ -82,16 +70,24 @@ class Store {
   }
 
   pub inflight getRandomPair(): Array<Entry> {
-    let entries = this.table.scan();
+    let scanned = this.table.scan();
 
-    let firstIdx = math.floor(math.random() * entries.length);
-    let var secondIdx = math.floor(math.random() * entries.length);
+    let firstIdx = math.floor(math.random() * scanned.Count);
+    let var secondIdx = math.floor(math.random() * scanned.Count);
+
+    // Make sure the two items are different
     while secondIdx == firstIdx {
-      secondIdx = math.floor(math.random() * entries.length);
+      secondIdx = math.floor(math.random() * scanned.Count);
     }
 
-    let first = _mapToEntry(entries.at(firstIdx));
-    let second = _mapToEntry(entries.at(secondIdx));
+    let first = Entry {
+      name: scanned.Items.at(firstIdx).get("Name").asStr(),
+      score: num.fromStr(scanned.Items.at(firstIdx).get("Score").get("value").asStr()),
+    };
+    let second = Entry {
+      name: scanned.Items.at(secondIdx).get("Name").asStr(),
+      score: num.fromStr(scanned.Items.at(secondIdx).get("Score").get("value").asStr()),
+    };
     return [first, second];
   }
 
@@ -126,10 +122,13 @@ class Store {
   }
 
   pub inflight list(): Array<Entry> {
-    let items = this.table.scan();
+    let scanned = this.table.scan();
     let entries = MutArray<Entry>[];
-    for item in items {
-      entries.push(_mapToEntry(item));
+    for item in scanned.Items {
+      entries.push(Entry {
+        name: item.get("Name").asStr(),
+        score: num.fromStr(item.get("Score").get("value").asStr()),
+      });
     }
     return entries.copy();
   }
@@ -205,7 +204,6 @@ if util.env("WING_TARGET") == "sim" {
   }) as "ReactAppSetup";
 }
 
-
 // Select two random items from the list of items for the user to choose between
 api.post("/requestChoices", inflight (_) => {
   let entries = store.getRandomPair();
@@ -238,6 +236,7 @@ api.post("/selectWinner", inflight (req) => {
   try {
      newScores = store.updateScores(selections.winner, selections.loser);
   } catch e {
+    log(e);
     return cloud.ApiResponse {
       status: 400,
       body: "Error: " + Json.stringify(e),
