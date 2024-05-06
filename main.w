@@ -136,7 +136,6 @@ class Store {
 
 let store = new Store() as "VotingAppStore";
 
-// about 40 items... any more and we need to start paginating
 let foods = [
   "Nigiri sushi",
   "Pizza margherita",
