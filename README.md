@@ -4,11 +4,11 @@
 Vote on different matchups as iconic dishes from around the world go head-to-head.
 
 <center>
-<b><a href="https://d1uu5g7pkrzn0o.cloudfront.net/">Live Demo</a></b>
+<b><a href="https://d21dqxvgiw7si8.cloudfront.net/">Live Demo</a></b>
 </center>
 <br>
 
-[![Battle of the Bites screenshot](screenshot.png)](https://d1uu5g7pkrzn0o.cloudfront.net/)
+[![Battle of the Bites screenshot](screenshot.png)](https://d21dqxvgiw7si8.cloudfront.net/)
 
 Inspired by https://eloeverything.co/.
 
