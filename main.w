@@ -25,7 +25,7 @@ class Util {
   pub static inflight clamp(value: num, min: num, max: num): num {
     if value < min {
       return min;
-    } elif value > max {
+    } else if value > max {
       return max;
     }
     return value;
@@ -43,7 +43,7 @@ class Store {
         // { name: "Score", type: "N" },
       ],
       hashKey: "Name",
-    ) as "EntiresTable";
+    ) as "EntriesTable";
   }
 
   pub inflight setEntry(entry: Entry) {
@@ -182,7 +182,7 @@ let foods = [
 
 new cloud.OnDeploy(inflight () => {
   for food in foods {
-    if !store.getEntry(food)? {
+    if store.getEntry(food) == nil {
       store.setEntry(Entry {
         name: food,
         score: 1000 + math.floor(math.random() * 100) - 50, // 1000 +/- 50
